@@ -1,0 +1,975 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QuantumMind — Next Gen Interface</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'SF Pro Display','Segoe UI',system-ui,sans-serif;}
+
+/* ---- CANVAS ---- */
+#bg{position:fixed;inset:0;z-index:0;}
+
+/* ---- OVERLAYS ---- */
+.scanlines{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.07) 3px,rgba(0,0,0,.07) 4px);
+}
+.vignette{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 70% 70% at 50% 50%,transparent 30%,rgba(0,0,0,.97) 100%);
+}
+
+/* ---- ROOT VARS ---- */
+:root{
+  --c1:#00fff0;      /* primary cyan */
+  --c2:#bf00ff;      /* primary purple */
+  --c3:#ff003c;      /* hot red */
+  --c4:#ff9f00;      /* amber */
+  --glow1:0 0 20px rgba(0,255,240,.7),0 0 60px rgba(0,255,240,.3);
+  --glow2:0 0 20px rgba(191,0,255,.7),0 0 60px rgba(191,0,255,.3);
+}
+
+/* ---- LAYOUT ---- */
+#ui{position:fixed;inset:0;z-index:10;display:grid;
+  grid-template-columns:300px 1fr 280px;
+  grid-template-rows:56px 1fr 140px;
+  pointer-events:none;
+}
+.ptr{pointer-events:all;}
+
+/* ---- GLASS ---- */
+.glass{
+  background:rgba(0,0,0,.75);
+  border:1px solid rgba(0,255,240,.15);
+  backdrop-filter:blur(20px) saturate(200%);
+  border-radius:14px;
+}
+.glass-p{
+  background:rgba(0,0,0,.82);
+  border:1px solid rgba(191,0,255,.18);
+  backdrop-filter:blur(24px);
+  border-radius:14px;
+}
+
+/* ===== TOPBAR ===== */
+#topbar{
+  grid-column:1/-1;grid-row:1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  background:rgba(0,0,0,.9);
+  border-bottom:1px solid rgba(0,255,240,.1);
+  backdrop-filter:blur(30px);
+  pointer-events:all;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{
+  position:relative;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-mark svg{position:absolute;animation:logoSpin 8s linear infinite;}
+.logo-mark span{font-size:14px;z-index:1;}
+@keyframes logoSpin{to{transform:rotate(360deg);}}
+.brand{
+  font-size:17px;font-weight:800;letter-spacing:.06em;
+  background:linear-gradient(90deg,#00fff0,#bf00ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.brand-tag{font-size:9px;color:rgba(0,255,240,.4);letter-spacing:.2em;text-transform:uppercase;}
+.nav{display:flex;gap:4px;}
+.nav-btn{
+  padding:6px 16px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.06em;
+  color:rgba(255,255,255,.4);cursor:pointer;transition:all .25s;
+  border:1px solid transparent;text-transform:uppercase;
+}
+.nav-btn:hover,.nav-btn.on{
+  color:#00fff0;background:rgba(0,255,240,.07);
+  border-color:rgba(0,255,240,.2);text-shadow:0 0 10px #00fff0;
+}
+.tr-right{display:flex;align-items:center;gap:16px;}
+.live-dot{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:rgba(0,255,240,.7);letter-spacing:.1em;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:#00fff0;
+  box-shadow:0 0 8px #00fff0,0 0 20px #00fff0;
+  animation:pulse 1.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+.clk{font-size:10px;color:rgba(255,255,255,.25);font-family:monospace;letter-spacing:.05em;}
+.qmode-btn{
+  padding:6px 14px;border-radius:6px;
+  background:linear-gradient(135deg,rgba(0,255,240,.12),rgba(191,0,255,.12));
+  border:1px solid rgba(0,255,240,.25);color:#00fff0;
+  font-size:10px;font-weight:800;letter-spacing:.1em;cursor:pointer;
+  transition:all .25s;text-transform:uppercase;
+}
+.qmode-btn:hover{background:linear-gradient(135deg,rgba(0,255,240,.22),rgba(191,0,255,.22));
+  box-shadow:var(--glow1);}
+
+/* ===== LEFT ===== */
+#left{grid-column:1;grid-row:2/4;padding:14px;display:flex;flex-direction:column;gap:10px;}
+
+.ph{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-radius:8px;
+  background:rgba(0,255,240,.04);border-top:2px solid var(--c1);
+  margin-bottom:2px;
+}
+.ph-title{font-size:9px;font-weight:900;color:var(--c1);letter-spacing:.18em;text-transform:uppercase;}
+.ph-badge{
+  font-size:8px;padding:2px 8px;border-radius:3px;font-weight:800;
+  background:rgba(0,255,240,.15);color:#00fff0;
+  box-shadow:0 0 10px rgba(0,255,240,.3);letter-spacing:.05em;
+}
+
+#chat{
+  flex:1;overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:none;
+}
+#chat::-webkit-scrollbar{display:none;}
+
+.m{display:flex;gap:8px;align-items:flex-end;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}}
+.m.u{flex-direction:row-reverse;}
+.av{
+  width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+.av.ai{background:rgba(0,255,240,.08);border:1px solid rgba(0,255,240,.25);}
+.av.u{background:rgba(191,0,255,.08);border:1px solid rgba(191,0,255,.25);}
+.mb{
+  padding:9px 12px;border-radius:10px;font-size:11.5px;line-height:1.55;max-width:215px;
+}
+.mb.ai{background:rgba(0,255,240,.05);border:1px solid rgba(0,255,240,.1);color:rgba(255,255,255,.8);}
+.mb.u{background:rgba(191,0,255,.07);border:1px solid rgba(191,0,255,.18);color:rgba(255,255,255,.8);}
+.mb .k{color:#00fff0;font-weight:700;}
+.typ{display:flex;gap:3px;padding:10px 12px;}
+.td{width:5px;height:5px;border-radius:50%;background:#00fff0;
+  animation:td .8s infinite;box-shadow:0 0 6px #00fff0;}
+.td:nth-child(2){animation-delay:.15s;}
+.td:nth-child(3){animation-delay:.3s;}
+@keyframes td{0%,80%,100%{transform:scale(.7);opacity:.3;}40%{transform:scale(1.2);opacity:1;}}
+
+#inp-wrap{
+  display:flex;gap:6px;padding:9px;border-radius:10px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(0,255,240,.1);
+}
+#inp{
+  flex:1;background:none;border:none;outline:none;
+  color:#fff;font-size:11.5px;font-family:inherit;
+}
+#inp::placeholder{color:rgba(255,255,255,.25);}
+#sbtn{
+  width:26px;height:26px;border-radius:6px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#00fff0,#bf00ff);
+  display:flex;align-items:center;justify-content:center;
+  color:#000;font-size:13px;font-weight:900;
+  transition:transform .2s,box-shadow .2s;
+}
+#sbtn:hover{transform:scale(1.1);box-shadow:0 0 15px rgba(0,255,240,.5);}
+
+/* ===== CENTER TOP ===== */
+#center-top{
+  grid-column:2;grid-row:2;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;padding-top:20px;pointer-events:none;
+}
+.m-tag{font-size:9px;color:rgba(0,255,240,.35);letter-spacing:.25em;text-transform:uppercase;margin-bottom:10px;}
+.m-title{
+  font-size:62px;font-weight:900;line-height:1;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#00fff0 0%,#bf00ff 50%,#ff003c 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 30px rgba(0,255,240,.4));
+  animation:titlePulse 4s ease-in-out infinite;
+}
+@keyframes titlePulse{
+  0%,100%{filter:drop-shadow(0 0 30px rgba(0,255,240,.4));}
+  50%{filter:drop-shadow(0 0 60px rgba(191,0,255,.5));}
+}
+.m-sub{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.18em;margin-top:8px;text-transform:uppercase;}
+
+.stats-row{display:flex;gap:10px;margin-top:22px;}
+.stat{
+  text-align:center;padding:10px 18px;
+  background:rgba(0,0,0,.7);
+  border:1px solid rgba(0,255,240,.1);
+  border-top:2px solid var(--c1);
+  border-radius:10px;min-width:90px;
+  transition:border-color .3s;
+}
+.stat:hover{border-top-color:#bf00ff;}
+.sv{font-size:20px;font-weight:900;color:#00fff0;font-family:monospace;
+  text-shadow:0 0 15px rgba(0,255,240,.6);}
+.sl{font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-top:3px;}
+
+/* Energy wave ring */
+.wave-rings{position:fixed;top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none;z-index:2;}
+.wr{
+  position:absolute;border-radius:50%;
+  border:1px solid rgba(0,255,240,.08);
+  transform:translate(-50%,-50%);
+  animation:expand 4s ease-out infinite;
+}
+.wr:nth-child(1){width:300px;height:300px;animation-delay:0s;}
+.wr:nth-child(2){width:500px;height:500px;animation-delay:.8s;border-color:rgba(191,0,255,.06);}
+.wr:nth-child(3){width:700px;height:700px;animation-delay:1.6s;border-color:rgba(255,0,60,.04);}
+.wr:nth-child(4){width:900px;height:900px;animation-delay:2.4s;}
+@keyframes expand{
+  0%{transform:translate(-50%,-50%) scale(.5);opacity:.8;}
+  100%{transform:translate(-50%,-50%) scale(1.1);opacity:0;}
+}
+
+/* ===== CENTER BOTTOM ===== */
+#center-bot{grid-column:2;grid-row:3;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.cbt{font-size:9px;color:rgba(0,255,240,.4);letter-spacing:.2em;text-transform:uppercase;text-align:center;}
+#circ{border-radius:10px;display:block;width:100%;}
+
+/* ===== RIGHT ===== */
+#right{grid-column:3;grid-row:2/4;padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;}
+#right::-webkit-scrollbar{width:2px;}
+#right::-webkit-scrollbar-thumb{background:rgba(0,255,240,.15);}
+
+.card{
+  padding:12px;border-radius:12px;
+  background:rgba(0,0,0,.8);
+  border:1px solid rgba(255,255,255,.06);
+  border-top:1px solid rgba(0,255,240,.12);
+}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.card-t{font-size:9px;font-weight:900;color:rgba(0,255,240,.7);letter-spacing:.15em;text-transform:uppercase;}
+.badge{font-size:8px;padding:2px 7px;border-radius:3px;font-weight:800;}
+.bg-g{background:rgba(0,255,100,.12);color:#00ff64;}
+.bg-y{background:rgba(255,200,0,.12);color:#ffc800;}
+.bg-r{background:rgba(255,0,60,.12);color:#ff003c;}
+
+/* Gauge */
+.gr{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.gl{font-size:9.5px;color:rgba(255,255,255,.4);width:72px;flex-shrink:0;}
+.gt{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.gf{height:100%;border-radius:2px;transition:width 1.2s ease;}
+.gv{font-size:9.5px;width:36px;text-align:right;font-weight:800;font-family:monospace;}
+
+/* Qubit grid */
+.qg{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
+.qc{
+  aspect-ratio:1;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:800;transition:all .5s;
+}
+.q0{background:rgba(0,255,240,.07);border:1px solid rgba(0,255,240,.15);color:rgba(0,255,240,.7);}
+.q1{background:rgba(191,0,255,.15);border:1px solid rgba(191,0,255,.35);color:#bf00ff;
+  box-shadow:0 0 6px rgba(191,0,255,.25);}
+.qe{background:rgba(255,0,60,.1);border:1px solid rgba(255,0,60,.3);color:#ff003c;
+  animation:qep 1.2s ease-in-out infinite;}
+@keyframes qep{0%,100%{box-shadow:0 0 3px rgba(255,0,60,.2);}50%{box-shadow:0 0 10px rgba(255,0,60,.6);}}
+
+/* SV bars */
+.svr{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.svs{font-size:10px;color:rgba(0,255,240,.6);font-family:monospace;width:36px;}
+.svt{flex:1;height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
+.svf{height:100%;border-radius:2px;background:linear-gradient(90deg,#00fff0,#bf00ff);}
+.svp{font-size:9.5px;width:30px;text-align:right;font-family:monospace;color:rgba(255,255,255,.5);}
+
+/* Algo rows */
+.ar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 9px;border-radius:7px;
+  background:rgba(0,255,240,.03);border:1px solid rgba(0,255,240,.07);
+  margin-bottom:5px;cursor:pointer;transition:all .2s;
+}
+.ar:hover{background:rgba(0,255,240,.08);border-color:rgba(0,255,240,.2);
+  box-shadow:0 0 12px rgba(0,255,240,.08);}
+.an{font-size:10.5px;color:rgba(255,255,255,.65);font-weight:600;}
+.asp{font-size:9.5px;color:#00fff0;font-weight:800;font-family:monospace;}
+
+/* Timer */
+.timer-val{font-size:30px;font-weight:900;color:#00fff0;font-family:monospace;
+  text-align:center;text-shadow:0 0 20px rgba(0,255,240,.5);letter-spacing:.05em;}
+.timer-sub{font-size:8px;color:rgba(255,255,255,.25);text-align:center;letter-spacing:.18em;text-transform:uppercase;margin-top:3px;}
+.timer-bar{margin-top:10px;height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#00fff0,#bf00ff,#ff003c);transition:width .5s;}
+
+/* ===== TOASTS ===== */
+#toasts{position:fixed;top:68px;right:294px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.toast{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;border-radius:9px;min-width:240px;
+  background:rgba(0,0,0,.92);
+  border:1px solid rgba(0,255,240,.2);
+  backdrop-filter:blur(20px);
+  font-size:11.5px;color:rgba(255,255,255,.75);
+  animation:tin .35s ease;
+  box-shadow:0 0 30px rgba(0,0,0,.5),0 0 1px rgba(0,255,240,.3);
+}
+@keyframes tin{from{opacity:0;transform:translateX(16px) scale(.96);}}
+.toast-ic{font-size:15px;}
+.toast-v{font-size:10px;color:#00fff0;font-weight:800;font-family:monospace;margin-left:auto;}
+
+/* ===== CORNER MARKS ===== */
+.cm{position:fixed;width:20px;height:20px;z-index:5;pointer-events:none;
+  border-color:rgba(0,255,240,.35);border-style:solid;}
+.cm-tl{top:58px;left:2px;border-width:2px 0 0 2px;}
+.cm-tr{top:58px;right:2px;border-width:2px 2px 0 0;}
+.cm-bl{bottom:2px;left:2px;border-width:0 0 2px 2px;}
+.cm-br{bottom:2px;right:2px;border-width:0 2px 2px 0;}
+
+/* ===== SEPARATOR ===== */
+.sep{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,240,.12),transparent);}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- Wave rings behind UI -->
+<div class="wave-rings">
+  <div class="wr"></div><div class="wr"></div>
+  <div class="wr"></div><div class="wr"></div>
+</div>
+
+<!-- Corner marks -->
+<div class="cm cm-tl"></div>
+<div class="cm cm-tr"></div>
+<div class="cm cm-bl"></div>
+<div class="cm cm-br"></div>
+
+<!-- Toast container -->
+<div id="toasts"></div>
+
+<!-- ===================== UI GRID ===================== -->
+<div id="ui">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="34" height="34" viewBox="0 0 34 34">
+          <circle cx="17" cy="17" r="15" fill="none" stroke="rgba(0,255,240,.4)" stroke-width="1"
+            stroke-dasharray="5 3"/>
+        </svg>
+        <span>&#x269B;</span>
+      </div>
+      <div>
+        <div class="brand">QUANTUMMIND</div>
+        <div class="brand-tag">QPU-4096 · Active</div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="nav-btn on">Quantum Lab</div>
+      <div class="nav-btn">Algorithms</div>
+      <div class="nav-btn">Entangle</div>
+      <div class="nav-btn">Error QEC</div>
+      <div class="nav-btn">Export</div>
+    </div>
+    <div class="tr-right">
+      <div class="live-dot"><div class="dot"></div>COHERENCE ACTIVE</div>
+      <div class="clk" id="clk">00:00:00 UTC</div>
+      <div class="qmode-btn" onclick="qmode()">&#x26A1; QUANTUM</div>
+    </div>
+  </div>
+
+  <!-- LEFT — AI CHAT -->
+  <div id="left" class="ptr">
+    <div class="ph">
+      <span class="ph-title">&#x26A1; Quantum AI Tutor</span>
+      <span class="ph-badge">GPT-Q ONLINE</span>
+    </div>
+    <div id="chat" class="glass" style="flex:1;padding:12px;"></div>
+    <div id="inp-wrap" class="glass ptr">
+      <input id="inp" placeholder="Ask anything quantum..." onkeydown="if(event.key==='Enter')send()">
+      <button id="sbtn" onclick="send()">&#x2191;</button>
+    </div>
+  </div>
+
+  <!-- CENTER TOP -->
+  <div id="center-top">
+    <div class="m-tag">Active Quantum Processor</div>
+    <div class="m-title">QPU&#x2011;4096</div>
+    <div class="m-sub">4096-Qubit Superconducting &nbsp;&middot;&nbsp; 99.97% Gate Fidelity</div>
+    <div class="stats-row">
+      <div class="stat"><div class="sv" id="s-q">4,096</div><div class="sl">Qubits</div></div>
+      <div class="stat"><div class="sv" id="s-f">99.97%</div><div class="sl">Fidelity</div></div>
+      <div class="stat"><div class="sv" id="s-o">182K</div><div class="sl">Ops/sec</div></div>
+      <div class="stat"><div class="sv" id="s-t">15mK</div><div class="sl">Temp</div></div>
+      <div class="stat"><div class="sv" id="s-e">2,048</div><div class="sl">Entangled</div></div>
+    </div>
+  </div>
+
+  <!-- CENTER BOTTOM — CIRCUIT -->
+  <div id="center-bot" class="glass-p ptr">
+    <div class="cbt">&#x25C8; Live Quantum Circuit — Bell State + QFT</div>
+    <canvas id="circ" height="92"></canvas>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right" class="ptr">
+
+    <!-- Qubit register -->
+    <div class="card">
+      <div class="card-h"><span class="card-t">&#x2B21; Qubit Register</span><span class="badge bg-g">LIVE</span></div>
+      <div class="qg" id="qg"></div>
+    </div>
+
+    <!-- System metrics -->
+    <div class="card">
+      <div class="card-h"><span class="card-t">&#x1F4CA; System Metrics</span><span class="badge bg-g">NOMINAL</span></div>
+      <div class="gr"><span class="gl">Fidelity</span><div class="gt"><div class="gf" id="gf-fi" style="width:99%;background:linear-gradient(90deg,#00fff0,#00ff88);"></div></div><span class="gv" id="gv-fi" style="color:#00fff0">99.9%</span></div>
+      <div class="gr"><span class="gl">Coherence</span><div class="gt"><div class="gf" id="gf-co" style="width:87%;background:linear-gradient(90deg,#bf00ff,#00fff0);"></div></div><span class="gv" id="gv-co" style="color:#bf00ff">87μs</span></div>
+      <div class="gr"><span class="gl">Entangle</span><div class="gt"><div class="gf" id="gf-en" style="width:94%;background:linear-gradient(90deg,#ff003c,#bf00ff);"></div></div><span class="gv" id="gv-en" style="color:#ff003c">94%</span></div>
+      <div class="gr"><span class="gl">Error Rate</span><div class="gt"><div class="gf" id="gf-er" style="width:3%;background:linear-gradient(90deg,#ff9f00,#ff003c);"></div></div><span class="gv" id="gv-er" style="color:#ff9f00">0.03%</span></div>
+      <div class="gr"><span class="gl">CPU Load</span><div class="gt"><div class="gf" id="gf-cp" style="width:42%;background:linear-gradient(90deg,#ff9f00,#bf00ff);"></div></div><span class="gv" id="gv-cp" style="color:#ff9f00">42%</span></div>
+    </div>
+
+    <!-- State vector -->
+    <div class="card">
+      <div class="card-h"><span class="card-t">|&#x03C8;&#x27E9; State Vector</span><span class="badge bg-y">SUPERPOSED</span></div>
+      <div id="sv"></div>
+    </div>
+
+    <!-- Algorithms -->
+    <div class="card">
+      <div class="card-h"><span class="card-t">&#x26A1; Quantum Advantage</span><span class="badge bg-g">READY</span></div>
+      <div class="ar" onclick="algo('Grover')"><span class="an">Grover's Search</span><span class="asp">&radic;N faster</span></div>
+      <div class="ar" onclick="algo('Shor')"><span class="an">Shor's Factoring</span><span class="asp">Exp. faster</span></div>
+      <div class="ar" onclick="algo('QFT')"><span class="an">Quantum Fourier Transform</span><span class="asp">Poly</span></div>
+      <div class="ar" onclick="algo('VQE')"><span class="an">VQE Optimization</span><span class="asp">Native</span></div>
+      <div class="ar" onclick="algo('QAOA')"><span class="an">QAOA Max-Cut</span><span class="asp">NP Approx</span></div>
+    </div>
+
+    <!-- Decoherence timer -->
+    <div class="card">
+      <div class="card-h"><span class="card-t">&#x23F1; Calibration Countdown</span><span class="badge bg-g">STABLE</span></div>
+      <div class="timer-val" id="tm">04:00:00</div>
+      <div class="timer-sub">Time until next calibration</div>
+      <div class="timer-bar"><div class="timer-fill" id="tmf" style="width:100%"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== THREE.JS ==================== -->
+<script>
+(()=>{
+  const C=document.getElementById('bg');
+  const R=new THREE.WebGLRenderer({canvas:C,antialias:true,alpha:false});
+  R.setPixelRatio(Math.min(devicePixelRatio,2));
+  R.setSize(innerWidth,innerHeight);
+  R.setClearColor(0x000000,1);
+  R.toneMapping=THREE.ACESFilmicToneMapping;
+  R.toneMappingExposure=1.2;
+
+  const S=new THREE.Scene();
+  S.fog=new THREE.FogExp2(0x000000,0.015);
+
+  const CAM=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,600);
+  CAM.position.set(0,7,28);
+  CAM.lookAt(0,2,0);
+
+  // Lights
+  S.add(new THREE.AmbientLight(0x000511,.5));
+  const L1=new THREE.PointLight(0x00fff0,4,50); L1.position.set(0,10,0); S.add(L1);
+  const L2=new THREE.PointLight(0xbf00ff,3,35); L2.position.set(-12,5,0); S.add(L2);
+  const L3=new THREE.PointLight(0xff003c,2,30); L3.position.set(12,-3,8); S.add(L3);
+  const L4=new THREE.PointLight(0xff9f00,1.5,25); L4.position.set(0,-8,0); S.add(L4);
+
+  /* ----- QUANTUM PROCESSOR GRID ----- */
+  const ROWS=8,COLS=8,SP=2.3;
+  const qubits=[];
+
+  // Dark base plate with glow
+  const plateG=new THREE.BoxGeometry(COLS*SP+3,.12,ROWS*SP+3);
+  const plateM=new THREE.MeshPhongMaterial({color:0x001111,transparent:true,opacity:.85,shininess:200});
+  S.add(Object.assign(new THREE.Mesh(plateG,plateM),{position:{x:0,y:-.55,z:0}}));
+
+  // Grid helper
+  const gh=new THREE.GridHelper(COLS*SP+2,COLS,0x00fff0,0x002222);
+  gh.material.transparent=true; gh.material.opacity=.25;
+  gh.position.y=-.45; S.add(gh);
+
+  // Qubits
+  const COLORS={0:0x00fff0,1:0xbf00ff,2:0xff003c};
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const m=new THREE.MeshPhongMaterial({color:0x00fff0,emissive:0x003322,
+      emissiveIntensity:.4,shininess:200,transparent:true,opacity:.95});
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(.3,20,20),m);
+    mesh.position.set((c-COLS/2+.5)*SP,0,(r-ROWS/2+.5)*SP);
+    S.add(mesh);
+
+    // Halo ring
+    const rm=new THREE.MeshBasicMaterial({color:0x00fff0,transparent:true,opacity:.25});
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.45,.035,8,36),rm);
+    ring.rotation.x=Math.PI/2; ring.position.copy(mesh.position); S.add(ring);
+
+    // Pillar
+    const pm=new THREE.MeshBasicMaterial({color:0x00fff0,transparent:true,opacity:.3});
+    const pil=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.5,6),pm);
+    pil.position.copy(mesh.position); pil.position.y-=.25; S.add(pil);
+
+    qubits.push({mesh,ring,ringMat:rm,mat:m,r,c,
+      phase:Math.random()*Math.PI*2,spd:.4+Math.random()*1.8,state:0});
+  }
+
+  // Entanglement beams
+  const beams=[];
+  function makeBeam(q1,q2,col){
+    const bm=new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0});
+    const bg=new THREE.BufferGeometry().setFromPoints([q1.mesh.position.clone(),q2.mesh.position.clone()]);
+    const ln=new THREE.Line(bg,bm); S.add(ln);
+    beams.push({ln,mat:bm,active:false,life:0});
+  }
+  for(let i=0;i<16;i++){
+    const a=qubits[Math.floor(Math.random()*qubits.length)];
+    const b=qubits[Math.floor(Math.random()*qubits.length)];
+    if(a!==b) makeBeam(a,b,[0xff003c,0xbf00ff,0x00fff0][i%3]);
+  }
+
+  /* ----- CENTRAL ATOM (above grid) ----- */
+  const AG=new THREE.Group(); AG.position.y=8; S.add(AG);
+
+  // Core nucleus — double sphere
+  const nOuter=new THREE.Mesh(
+    new THREE.SphereGeometry(1.1,32,32),
+    new THREE.MeshPhongMaterial({color:0x00fff0,emissive:0x00fff0,emissiveIntensity:.3,
+      transparent:true,opacity:.15,wireframe:false})
+  ); AG.add(nOuter);
+  const nInner=new THREE.Mesh(
+    new THREE.SphereGeometry(.65,32,32),
+    new THREE.MeshPhongMaterial({color:0x00fff0,emissive:0x00fff0,emissiveIntensity:.6,shininess:300})
+  ); AG.add(nInner);
+
+  // Orbital rings + electrons
+  const orbData=[
+    {r:2.8,col:0x00fff0,tilt:0,eTilt:0},
+    {r:3.2,col:0xbf00ff,tilt:Math.PI/2.5,eTilt:Math.PI/3},
+    {r:2.5,col:0xff003c,tilt:-Math.PI/3,eTilt:-Math.PI/4},
+  ];
+  const electrons=[];
+  orbData.forEach((o,i)=>{
+    const ring=new THREE.Mesh(
+      new THREE.TorusGeometry(o.r,.045,10,90),
+      new THREE.MeshBasicMaterial({color:o.col,transparent:true,opacity:.35})
+    );
+    ring.rotation.x=o.tilt; ring.rotation.z=o.eTilt; AG.add(ring);
+
+    const e=new THREE.Mesh(
+      new THREE.SphereGeometry(.22,14,14),
+      new THREE.MeshBasicMaterial({color:o.col})
+    );
+    e.userData={angle:i*Math.PI*2/3,radius:o.r,tilt:o.tilt,tiltZ:o.eTilt,spd:.8+i*.35};
+    AG.add(e);
+    electrons.push(e);
+  });
+
+  // Probability cloud
+  const cloudN=800;
+  const cPos=new Float32Array(cloudN*3);
+  for(let i=0;i<cloudN;i++){
+    const r=.8+Math.random()*3.8,th=Math.random()*Math.PI*2,ph=Math.random()*Math.PI;
+    cPos[i*3]=r*Math.sin(ph)*Math.cos(th);
+    cPos[i*3+1]=r*Math.cos(ph);
+    cPos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+  }
+  const cGeo=new THREE.BufferGeometry();
+  cGeo.setAttribute('position',new THREE.BufferAttribute(cPos,3));
+  AG.add(new THREE.Points(cGeo,new THREE.PointsMaterial({color:0x00fff0,size:.07,transparent:true,opacity:.4})));
+
+  // Equatorial glow ring (big, flat)
+  AG.add(new THREE.Mesh(
+    new THREE.TorusGeometry(4.5,.12,8,100),
+    new THREE.MeshBasicMaterial({color:0x00fff0,transparent:true,opacity:.08})
+  ));
+
+  /* ----- DATA PARTICLES (stream up) ----- */
+  const dpN=500;
+  const dpPos=new Float32Array(dpN*3);
+  const dpPh=new Float32Array(dpN);
+  for(let i=0;i<dpN;i++){
+    dpPos[i*3]=(Math.random()-.5)*40;
+    dpPos[i*3+1]=(Math.random()-.5)*30;
+    dpPos[i*3+2]=(Math.random()-.5)*20-5;
+    dpPh[i]=Math.random()*Math.PI*2;
+  }
+  const dpGeo=new THREE.BufferGeometry();
+  dpGeo.setAttribute('position',new THREE.BufferAttribute(dpPos,3));
+  S.add(new THREE.Points(dpGeo,
+    new THREE.PointsMaterial({color:0x00fff0,size:.1,transparent:true,opacity:.5})));
+
+  /* ----- STAR FIELD ----- */
+  const stN=3000,stPos=new Float32Array(stN*3);
+  for(let i=0;i<stN;i++){
+    stPos[i*3]=(Math.random()-.5)*500;
+    stPos[i*3+1]=(Math.random()-.5)*300;
+    stPos[i*3+2]=(Math.random()-.5)*300-80;
+  }
+  const stGeo=new THREE.BufferGeometry();
+  stGeo.setAttribute('position',new THREE.BufferAttribute(stPos,3));
+  S.add(new THREE.Points(stGeo,
+    new THREE.PointsMaterial({color:0x223344,size:.35,transparent:true,opacity:.9})));
+
+  /* ----- FLOATING ENERGY HEXAGONS ----- */
+  const hexGroup=new THREE.Group(); S.add(hexGroup);
+  for(let i=0;i<12;i++){
+    const hm=new THREE.Mesh(
+      new THREE.TorusGeometry(.3+Math.random()*.5,.025,6,6),
+      new THREE.MeshBasicMaterial({color:[0x00fff0,0xbf00ff,0xff003c][i%3],
+        transparent:true,opacity:.15+Math.random()*.2})
+    );
+    hm.position.set((Math.random()-.5)*30,(Math.random()-.5)*15,(Math.random()-.5)*15-5);
+    hm.userData={rx:Math.random()*.01,ry:Math.random()*.01,rz:Math.random()*.01,
+      vy:(Math.random()-.5)*.02};
+    hexGroup.add(hm);
+  }
+
+  // Mouse
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{
+    mx=(e.clientX/innerWidth-.5)*2;
+    my=(e.clientY/innerHeight-.5)*2;
+  });
+  window.addEventListener('resize',()=>{
+    R.setSize(innerWidth,innerHeight);
+    CAM.aspect=innerWidth/innerHeight;
+    CAM.updateProjectionMatrix();
+  });
+
+  let t=0,beamT=0;
+  function tick(){
+    requestAnimationFrame(tick);
+    t+=.016; beamT+=.016;
+
+    // Camera follow mouse
+    CAM.position.x+=(mx*6-CAM.position.x)*.025;
+    CAM.position.y+=(-my*3+7-CAM.position.y)*.025;
+    CAM.lookAt(0,4,0);
+
+    // Qubits
+    qubits.forEach(q=>{
+      const w=Math.sin(t*q.spd+q.phase);
+      q.mesh.position.y=w*.35;
+      const br=(w+1)*.5;
+      if(q.state===0) q.mat.emissive.setRGB(0,br*.25,.22*br);
+      else if(q.state===1) q.mat.emissive.setRGB(.47*br,0,.75*br);
+      else q.mat.emissive.setRGB(.75*br,0,.12*br);
+      q.ring.position.y=q.mesh.position.y;
+      q.ring.rotation.z=t*q.spd*.4;
+      q.ringMat.opacity=.08+br*.35;
+    });
+
+    // Beams pulse
+    if(beamT>2.5){
+      beamT=0;
+      beams.forEach(b=>{
+        b.active=!b.active;
+        b.mat.opacity=b.active?.55:0;
+      });
+    }
+    beams.forEach(b=>{ if(b.active) b.mat.opacity=Math.max(0,b.mat.opacity-.004); });
+
+    // Atom
+    AG.rotation.y=t*.18;
+    nInner.material.emissiveIntensity=.4+Math.sin(t*2.5)*.25;
+    nOuter.material.opacity=.1+Math.sin(t*1.8)*.05;
+    electrons.forEach(e=>{
+      const d=e.userData;
+      d.angle+=.016*d.spd;
+      const lx=Math.cos(d.angle)*d.radius;
+      const lz=Math.sin(d.angle)*d.radius;
+      const ct=Math.cos(d.tilt),st=Math.sin(d.tilt);
+      const ctz=Math.cos(d.tiltZ),stz=Math.sin(d.tiltZ);
+      e.position.x=lx*ctz-lz*st*stz;
+      e.position.y=lz*ct;
+      e.position.z=lx*stz+lz*st*ctz;
+    });
+
+    // Hexagons float
+    hexGroup.children.forEach(h=>{
+      h.rotation.x+=h.userData.rx;
+      h.rotation.y+=h.userData.ry;
+      h.rotation.z+=h.userData.rz;
+      h.position.y+=h.userData.vy;
+      if(Math.abs(h.position.y)>10) h.userData.vy*=-1;
+    });
+
+    // Data particles rise
+    const dp=dpGeo.attributes.position.array;
+    for(let i=0;i<dpN;i++){
+      dp[i*3+1]+=.035;
+      if(dp[i*3+1]>18) dp[i*3+1]=-15;
+      dp[i*3]+=Math.sin(t*1.2+dpPh[i])*.012;
+    }
+    dpGeo.attributes.position.needsUpdate=true;
+
+    // Light pulse
+    L1.intensity=3+Math.sin(t*3)*1.5;
+    L2.intensity=2+Math.cos(t*2.2)*.8;
+    L3.intensity=1.5+Math.sin(t*1.7)*.7;
+
+    R.render(S,CAM);
+  }
+  tick();
+
+  window._qubits=qubits;
+})();
+</script>
+
+<!-- ==================== CIRCUIT ==================== -->
+<script>
+(()=>{
+  const cv=document.getElementById('circ');
+  function resize(){ cv.width=cv.parentElement.clientWidth-28; }
+  resize(); new ResizeObserver(resize).observe(cv.parentElement);
+  const ctx=cv.getContext('2d');
+  const GATES=[
+    {l:'H',c:'#00fff0'},{l:'CNOT',c:'#bf00ff'},{l:'X',c:'#ff003c'},
+    {l:'H',c:'#00fff0'},{l:'S',c:'#ff9f00'},{l:'T',c:'#00fff0'},
+    {l:'CX',c:'#bf00ff'},{l:'M',c:'#ff003c'},{l:'H',c:'#00fff0'},
+  ];
+  const QN=3;
+  let at=0;
+  function draw(){
+    const W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    const rH=26,sY=18,sX=55,slW=(W-sX-12)/GATES.length;
+    // wires & labels
+    for(let q=0;q<QN;q++){
+      const y=sY+q*rH;
+      ctx.fillStyle='rgba(0,255,240,.65)'; ctx.font='bold 10px monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('q'+q,24,y);
+      ctx.strokeStyle='rgba(0,255,240,.18)'; ctx.lineWidth=1;
+      ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(44,y); ctx.lineTo(W-8,y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    const ag=Math.floor(at/0.45)%GATES.length;
+    GATES.forEach((g,i)=>{
+      const x=sX+i*slW+slW/2;
+      const q=i%QN, y=sY+q*rH, act=i===ag;
+      const sz=22;
+      ctx.save();
+      if(act){ctx.shadowColor=g.c;ctx.shadowBlur=18;}
+      ctx.strokeStyle=act?g.c:g.c+'44'; ctx.lineWidth=act?1.5:1;
+      ctx.fillStyle=act?g.c+'1a':g.c+'08';
+      ctx.beginPath(); ctx.roundRect(x-sz/2,y-sz/2,sz,sz,4);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle=act?g.c:g.c+'66';
+      ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(g.l,x,y);
+      if(g.l==='CNOT'||g.l==='CX'){
+        ctx.strokeStyle=g.c+'55'; ctx.lineWidth=1;
+        ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+rH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(x,y+rH,4.5,0,Math.PI*2);
+        ctx.strokeStyle=g.c; ctx.lineWidth=1.5; ctx.stroke();
+      }
+      ctx.restore();
+    });
+    at+=.018; requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+<!-- ==================== QUBIT GRID ==================== -->
+<script>
+(()=>{
+  const g=document.getElementById('qg');
+  const cells=[];
+  for(let i=0;i<32;i++){
+    const d=document.createElement('div'); d.className='qc q0';
+    d.textContent='0'; g.appendChild(d); cells.push(d);
+  }
+  function upd(){
+    cells.forEach(c=>{
+      const r=Math.random();
+      if(r<.55){c.className='qc q0';c.textContent='0';}
+      else if(r<.8){c.className='qc q1';c.textContent='1';}
+      else{c.className='qc qe';c.textContent='⊕';}
+    });
+  }
+  setInterval(upd,1100); upd();
+})();
+</script>
+
+<!-- ==================== STATE VECTOR ==================== -->
+<script>
+(()=>{
+  const sv=document.getElementById('sv');
+  const states=['|00⟩','|01⟩','|10⟩','|11⟩'];
+  function upd(){
+    let v=states.map(()=>Math.random());
+    const s=v.reduce((a,b)=>a+b,0); v=v.map(x=>x/s);
+    sv.innerHTML=v.map((x,i)=>`
+      <div class="svr">
+        <span class="svs">${states[i]}</span>
+        <div class="svt"><div class="svf" style="width:${Math.round(x*100)}%"></div></div>
+        <span class="svp">${Math.round(x*100)}%</span>
+      </div>`).join('');
+  }
+  setInterval(upd,1700); upd();
+})();
+</script>
+
+<!-- ==================== METRICS ==================== -->
+<script>
+(()=>{
+  let base=180000;
+  function upd(){
+    document.getElementById('s-o').textContent=((base+Math.random()*20000)|0).toLocaleString();
+    document.getElementById('s-e').textContent=(2000+Math.floor(Math.random()*200)).toLocaleString();
+    const fi=(99.8+Math.random()*.19).toFixed(2);
+    document.getElementById('s-f').textContent=fi+'%';
+    document.getElementById('gv-fi').textContent=fi+'%';
+    const er=(0.01+Math.random()*.05).toFixed(3);
+    document.getElementById('gv-er').textContent=er+'%';
+    document.getElementById('gf-er').style.width=(er*1000)+'%';
+    const cp=30+Math.floor(Math.random()*35);
+    document.getElementById('gv-cp').textContent=cp+'%';
+    document.getElementById('gf-cp').style.width=cp+'%';
+    const co=75+Math.floor(Math.random()*20);
+    document.getElementById('gv-co').textContent=co+'μs';
+    document.getElementById('gf-co').style.width=co+'%';
+  }
+  setInterval(upd,1400); upd();
+})();
+</script>
+
+<!-- ==================== TIMER ==================== -->
+<script>
+(()=>{
+  let sec=3600*4; const tot=sec;
+  function tick(){
+    sec--; if(sec<0)sec=tot;
+    const h=(sec/3600|0),m=((sec%3600)/60|0),s=sec%60;
+    document.getElementById('tm').textContent=
+      String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    document.getElementById('tmf').style.width=(sec/tot*100)+'%';
+  }
+  setInterval(tick,1000); tick();
+})();
+</script>
+
+<!-- ==================== CLOCK ==================== -->
+<script>
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clk').textContent=n.toISOString().slice(0,19).replace('T',' ')+' UTC';
+},1000);
+</script>
+
+<!-- ==================== TOASTS ==================== -->
+<script>
+const TOASTS=[
+  ['⚡','Quantum Advantage','2^53× speedup'],
+  ['🔗','Bell State Φ+','Entangled'],
+  ['✅','Gate Fidelity','99.97%'],
+  ['⚠️','Decoherence q37','T2=42μs'],
+  ['📊','Error Correction','Surface Code'],
+  ['🔬','Wave Collapsed','|🤔⟩→|1⟩'],
+  ['🌐','QKD Key Gen','256-qubit'],
+  ['🔑','Phase Kickback','Detected'],
+  ['💡','VQE Converged','-1.137 Ha'],
+  ['⚛️','QFT Applied','n=12 qubits'],
+];
+function toast(ic,msg,val){
+  const c=document.getElementById('toasts');
+  const d=document.createElement('div'); d.className='toast';
+  d.innerHTML=`<span class="toast-ic">${ic}</span>${msg}<span class="toast-v">${val}</span>`;
+  c.appendChild(d);
+  setTimeout(()=>{d.style.transition='opacity .4s';d.style.opacity='0';},3200);
+  setTimeout(()=>d.remove(),3700);
+}
+setInterval(()=>{
+  const [i,m,v]=TOASTS[Math.floor(Math.random()*TOASTS.length)];
+  toast(i,m,v);
+},3000);
+setTimeout(()=>toast('⚛️','QPU-4096 Online','Ready'),600);
+</script>
+
+<!-- ==================== NAV ==================== -->
+<script>
+document.querySelectorAll('.nav-btn').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+});
+let qm=false;
+function qmode(){
+  qm=!qm;
+  document.documentElement.style.setProperty('--c1',qm?'#ff003c':'#00fff0');
+  document.documentElement.style.setProperty('--c2',qm?'#ff9f00':'#bf00ff');
+  toast(qm?'🟥':'🟢',qm?'MAX POWER MODE':'Standard Mode',qm?'ALL CORES':'Nominal');
+}
+</script>
+
+<!-- ==================== AI CHAT ==================== -->
+<script>
+const QA={
+  bloch:  'The Bloch sphere maps a qubit state \u03b1|0\u27e9+\u03b2|1\u27e9 to a point on a unit sphere. North pole = |0\u27e9, south = |1\u27e9. Any surface point is a valid pure state — the Hadamard gate flips the qubit to the equator!',
+  entangle:'Entanglement creates non-local correlations. A Bell state \u03a6+ = (|00\u27e9+|11\u27e9)/\u221a2 means measuring one qubit instantly determines the other, no matter the distance.',
+  gate:   'Quantum gates are unitary matrices. H = 1/\u221a2 [[1,1],[1,-1]]. CNOT flips the target if control is |1\u27e9. Together they can entangle any two qubits in one step!',
+  grover: "Grover's algorithm searches N items in O(\u221aN) steps vs O(N) classical. It amplifies the target amplitude using phase inversion + diffusion. 64x speedup for N=4096!",
+  shor:   "Shor's algorithm factors N-bit integers in polynomial time using quantum phase estimation — exponentially faster than classical, which takes exp(N^1/3) time.",
+  super:  'Superposition: \u03b1|0\u27e9+\u03b2|1\u27e9 with |\u03b1|\u00b2+|\u03b2|\u00b2=1. The qubit exists in both states simultaneously. Measurement collapses it — probability |\u03b1|\u00b2 for |0\u27e9, |\u03b2|\u00b2 for |1\u27e9.',
+  error:  'Surface codes use a 2D grid of physical qubits to encode 1 logical qubit. Syndrome measurements detect errors without collapsing the logical state. ~100:1 physical:logical ratio.',
+  qft:    'QFT transforms amplitudes to their frequency domain in O(n\u00b2) gates vs O(n·2^n) classically. It\'s the core of Shor\'s, phase estimation, and quantum signal processing.',
+  def:    'QPU-4096 ready. I can explain: Bloch sphere, entanglement, quantum gates, Grover, Shor, QFT, error correction, or anything else quantum!',
+};
+const INTRO=[
+  {r:'ai',t:'\u269b QPU-4096 online — 4,096 qubits initialized. All systems nominal. Ask me anything!'},
+  {r:'user',t:'What is quantum entanglement?'},
+  {r:'ai',t:'Entanglement links qubits so measuring one instantly collapses the other — even light-years apart. Einstein called it \'spooky action at a distance\'. Bell states are the simplest example!'},
+];
+function addMsg(r,t){
+  const c=document.getElementById('chat');
+  const d=document.createElement('div'); d.className='m '+r;
+  d.innerHTML=`<div class="av ${r}">${r==='ai'?'\u269b':'U'}</div><div class="mb ${r}">${t}</div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function typing(){
+  const c=document.getElementById('chat');
+  const d=document.createElement('div'); d.className='m ai'; d.id='typ';
+  d.innerHTML='<div class="av ai">\u269b</div><div class="mb ai"><div class="typ"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function rmTyping(){ const d=document.getElementById('typ'); if(d)d.remove(); }
+function reply(txt){
+  const t=txt.toLowerCase();
+  if(t.includes('bloch')||t.includes('sphere')) return QA.bloch;
+  if(t.includes('entangl')||t.includes('bell')) return QA.entangle;
+  if(t.includes('gate')||t.includes('hadamard')||t.includes('cnot')) return QA.gate;
+  if(t.includes('grover')||t.includes('search')) return QA.grover;
+  if(t.includes('shor')||t.includes('factor')) return QA.shor;
+  if(t.includes('super')) return QA.super;
+  if(t.includes('error')||t.includes('correct')||t.includes('surface')) return QA.error;
+  if(t.includes('qft')||t.includes('fourier')) return QA.qft;
+  return QA.def;
+}
+function send(){
+  const inp=document.getElementById('inp');
+  const txt=inp.value.trim(); if(!txt)return;
+  inp.value=''; addMsg('user',txt); typing();
+  setTimeout(()=>{rmTyping();addMsg('ai',reply(txt));},900+Math.random()*700);
+}
+INTRO.forEach((m,i)=>setTimeout(()=>addMsg(m.r,m.t),(i+1)*550));
+</script>
+
+<!-- ==================== ALGO RUNNER ==================== -->
+<script>
+const ALGOS={
+  Grover: ["Initializing Grover's oracle...","Amplitude amplification: step 32/64","\u221aN=64 iterations complete! Target found. Speedup: 2048\u00d7"],
+  Shor:   ['Quantum phase estimation started...','QFT on 20-qubit register applied.','RSA-2048 factors found! Period r=340'],
+  QFT:    ['Applying Hadamard cascade...','Controlled phase rotations applied.','QFT complete — precision: 10\u207b\xb9\u2075'],
+  VQE:    ['Variational ansatz initialized...','Parameter optimization: iteration 48','Converged! Ground state E = -1.137 Ha'],
+  QAOA:   ['QAOA depth p=5 circuit compiled...','Classical optimizer: COBYLA step 80','Max-Cut solved! Approximation ratio 0.997'],
+};
+function algo(name){
+  (ALGOS[name]||['Running...']).forEach((s,i)=>setTimeout(()=>addMsg('ai',s),600+i*900));
+  toast('\u26a1',name+' started','Running');
+}
+</script>
+</body>
+</html>

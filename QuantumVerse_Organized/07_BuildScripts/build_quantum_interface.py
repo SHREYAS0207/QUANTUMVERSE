@@ -1,0 +1,1039 @@
+html = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QuantumMind AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:\'Segoe UI\',system-ui,sans-serif;}
+:root{--c:#00ffcc;--p:#a259ff;--b:#0d0d1a;--g:rgba(0,255,204,0.08);}
+
+/* ========= CANVAS ========= */
+#three-canvas{position:fixed;inset:0;z-index:0;}
+
+/* ========= SCAN LINE OVERLAY ========= */
+#scanline{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);}
+
+/* ========= VIGNETTE ========= */
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.85) 100%);}
+
+/* ========= GRID OVERLAY ========= */
+#grid-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(rgba(0,255,204,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,.03) 1px,transparent 1px);
+  background-size:60px 60px;}
+
+/* ========= LAYOUT ========= */
+#ui{position:fixed;inset:0;z-index:10;display:grid;
+  grid-template-columns:340px 1fr 320px;
+  grid-template-rows:64px 1fr 160px;
+  gap:0;pointer-events:none;}
+
+/* ========= GLASS MIXIN ========= */
+.glass{
+  background:rgba(0,255,204,.04);
+  border:1px solid rgba(0,255,204,.18);
+  backdrop-filter:blur(18px) saturate(180%);
+  -webkit-backdrop-filter:blur(18px) saturate(180%);
+  border-radius:16px;
+  pointer-events:all;
+}
+.glass-dark{
+  background:rgba(5,5,20,.75);
+  border:1px solid rgba(0,255,204,.12);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-radius:16px;
+  pointer-events:all;
+}
+
+/* ========= TOPBAR ========= */
+#topbar{
+  grid-column:1/-1;grid-row:1;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:rgba(0,0,0,.6);
+  border-bottom:1px solid rgba(0,255,204,.12);
+  backdrop-filter:blur(20px);
+  pointer-events:all;
+}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#00ffcc,#a259ff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:0 0 20px rgba(0,255,204,.4);
+  animation:logoPulse 2s ease-in-out infinite;
+}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 20px rgba(0,255,204,.4);}50%{box-shadow:0 0 40px rgba(0,255,204,.8);}}
+.logo-text{font-size:18px;font-weight:800;letter-spacing:.04em;
+  background:linear-gradient(90deg,#00ffcc,#a259ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:10px;color:rgba(0,255,204,.5);letter-spacing:.15em;text-transform:uppercase;margin-top:1px;}
+.topbar-center{display:flex;gap:6px;align-items:center;}
+.tab{padding:7px 18px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:.05em;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.tab:hover,.tab.active{color:#00ffcc;background:rgba(0,255,204,.08);border-color:rgba(0,255,204,.2);}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#00ffcc;
+  box-shadow:0 0 8px #00ffcc;animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+.status-text{font-size:11px;color:rgba(0,255,204,.7);letter-spacing:.08em;}
+.sys-info{font-size:10px;color:rgba(255,255,255,.3);font-family:monospace;}
+
+/* ========= LEFT PANEL — QUANTUM AI CHAT ========= */
+#left-panel{grid-column:1;grid-row:2/4;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-radius:10px;
+  background:rgba(0,255,204,.05);border:1px solid rgba(0,255,204,.12);
+}
+.panel-title{font-size:11px;font-weight:700;color:#00ffcc;letter-spacing:.12em;text-transform:uppercase;}
+.panel-badge{
+  font-size:9px;padding:2px 8px;border-radius:4px;
+  background:rgba(0,255,204,.15);color:#00ffcc;font-weight:700;letter-spacing:.08em;
+}
+#chat-messages{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  padding:4px 2px;scrollbar-width:thin;scrollbar-color:rgba(0,255,204,.2) transparent;
+}
+#chat-messages::-webkit-scrollbar{width:3px;}
+#chat-messages::-webkit-scrollbar-thumb{background:rgba(0,255,204,.2);border-radius:2px;}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:msgIn .3s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+}
+.msg-avatar.ai{background:linear-gradient(135deg,#00ffcc22,#a259ff22);border:1px solid rgba(0,255,204,.3);}
+.msg-avatar.user{background:linear-gradient(135deg,#a259ff22,#ff6b9d22);border:1px solid rgba(162,89,255,.3);}
+.msg-bubble{
+  padding:10px 13px;border-radius:12px;font-size:12px;line-height:1.6;
+  max-width:220px;
+}
+.msg-bubble.ai{
+  background:rgba(0,255,204,.06);border:1px solid rgba(0,255,204,.12);
+  color:rgba(255,255,255,.85);
+}
+.msg-bubble.user{
+  background:rgba(162,89,255,.1);border:1px solid rgba(162,89,255,.2);
+  color:rgba(255,255,255,.85);text-align:right;
+}
+.msg-bubble .highlight{color:#00ffcc;font-weight:700;}
+.typing-indicator{display:flex;gap:4px;padding:12px 13px;}
+.dot{width:6px;height:6px;border-radius:50%;background:#00ffcc;animation:typingDot .8s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes typingDot{0%,80%,100%{transform:scale(.8);opacity:.4;}40%{transform:scale(1.2);opacity:1;}}
+#chat-input-wrap{
+  display:flex;gap:8px;padding:10px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(0,255,204,.12);
+}
+#chat-input{
+  flex:1;background:none;border:none;outline:none;
+  color:#fff;font-size:12px;font-family:inherit;
+  placeholder-color:rgba(255,255,255,.3);
+}
+#chat-input::placeholder{color:rgba(255,255,255,.3);}
+#send-btn{
+  width:28px;height:28px;border-radius:7px;border:none;
+  background:linear-gradient(135deg,#00ffcc,#a259ff);
+  color:#000;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s;font-weight:700;
+}
+#send-btn:hover{transform:scale(1.1);}
+
+/* ========= CENTER TOP — QUANTUM MODEL LABEL ========= */
+#center-label{
+  grid-column:2;grid-row:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding-top:24px;pointer-events:none;
+}
+.model-label{font-size:11px;color:rgba(0,255,204,.4);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;}
+.model-name{
+  font-size:48px;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#00ffcc,#a259ff,#ff6b9d);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:nameGlow 3s ease-in-out infinite;
+}
+@keyframes nameGlow{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(0,255,204,.3));}
+  50%{filter:drop-shadow(0 0 40px rgba(162,89,255,.5));}
+}
+.model-sub{font-size:12px;color:rgba(255,255,255,.35);letter-spacing:.1em;margin-top:8px;}
+.quantum-metrics{display:flex;gap:24px;margin-top:20px;}
+.qm{
+  text-align:center;padding:8px 16px;border-radius:10px;
+  background:rgba(0,255,204,.04);border:1px solid rgba(0,255,204,.1);
+}
+.qm-val{font-size:18px;font-weight:800;color:#00ffcc;font-family:monospace;}
+.qm-lbl{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+
+/* ========= CENTER BOTTOM — CIRCUIT VIZ ========= */
+#circuit-bar{grid-column:2;grid-row:3;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.circuit-title{font-size:10px;color:rgba(0,255,204,.5);letter-spacing:.15em;text-transform:uppercase;text-align:center;}
+#circuit-canvas{border-radius:10px;}
+
+/* ========= RIGHT PANEL — QUANTUM STATE ========= */
+#right-panel{grid-column:3;grid-row:2/4;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+
+/* Metric card */
+.metric-card{
+  padding:14px;border-radius:12px;
+  background:rgba(5,5,20,.7);
+  border:1px solid rgba(0,255,204,.1);
+  transition:border-color .3s;
+}
+.metric-card:hover{border-color:rgba(0,255,204,.3);}
+.mc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mc-title{font-size:10px;color:rgba(0,255,204,.6);letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+.mc-badge{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:.05em;}
+.mc-badge.green{background:rgba(0,255,100,.15);color:#00ff64;}
+.mc-badge.yellow{background:rgba(255,200,0,.15);color:#ffc800;}
+.mc-badge.red{background:rgba(255,60,60,.15);color:#ff3c3c;}
+
+/* Gauge bar */
+.gauge-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.gauge-label{font-size:10px;color:rgba(255,255,255,.45);min-width:70px;}
+.gauge-track{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.gauge-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.gauge-val{font-size:10px;min-width:34px;text-align:right;font-weight:700;font-family:monospace;}
+
+/* Qubit grid */
+.qubit-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;}
+.qubit-cell{
+  aspect-ratio:1;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;cursor:default;
+  transition:all .4s;
+}
+.qubit-cell.zero{background:rgba(0,255,204,.1);border:1px solid rgba(0,255,204,.2);color:#00ffcc;}
+.qubit-cell.one{background:rgba(162,89,255,.2);border:1px solid rgba(162,89,255,.4);color:#a259ff;
+  box-shadow:0 0 6px rgba(162,89,255,.3);}
+.qubit-cell.entangled{background:rgba(255,107,157,.15);border:1px solid rgba(255,107,157,.35);color:#ff6b9d;
+  animation:entPulse 1s ease-in-out infinite;}
+@keyframes entPulse{0%,100%{box-shadow:0 0 4px rgba(255,107,157,.3);}50%{box-shadow:0 0 12px rgba(255,107,157,.7);}}
+
+/* State vector */
+.sv-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.sv-state{font-size:10px;color:rgba(0,255,204,.7);font-family:monospace;min-width:38px;}
+.sv-bar-track{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.sv-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#00ffcc,#a259ff);}
+.sv-prob{font-size:10px;color:#fff;min-width:32px;text-align:right;font-family:monospace;opacity:.7;}
+
+/* Algorithm cards */
+.algo-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border-radius:8px;
+  background:rgba(0,255,204,.03);border:1px solid rgba(0,255,204,.08);
+  margin-bottom:6px;cursor:pointer;transition:all .2s;
+}
+.algo-row:hover{background:rgba(0,255,204,.07);border-color:rgba(0,255,204,.2);}
+.algo-name{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;}
+.algo-speedup{font-size:10px;color:#00ffcc;font-weight:700;font-family:monospace;}
+
+/* Notification toast */
+#toast-container{position:fixed;top:80px;right:340px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{
+  padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:10px;
+  background:rgba(5,5,20,.9);border:1px solid rgba(0,255,204,.25);
+  backdrop-filter:blur(20px);min-width:260px;
+  animation:toastIn .4s ease;font-size:12px;color:rgba(255,255,255,.8);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+.toast-icon{font-size:16px;}
+.toast-msg{flex:1;}
+.toast-val{font-size:11px;color:#00ffcc;font-weight:700;font-family:monospace;}
+
+/* Floating particles on hover effect */
+.glow-ring{position:fixed;width:600px;height:600px;border-radius:50%;
+  border:1px solid rgba(0,255,204,.08);top:50%;left:50%;
+  transform:translate(-50%,-50%);pointer-events:none;z-index:2;animation:ringRotate 20s linear infinite;}
+.glow-ring:nth-child(2){width:800px;height:800px;border-color:rgba(162,89,255,.05);animation-duration:30s;animation-direction:reverse;}
+.glow-ring:nth-child(3){width:500px;height:500px;border-color:rgba(255,107,157,.06);animation-duration:15s;}
+@keyframes ringRotate{from{transform:translate(-50%,-50%) rotate(0deg);}to{transform:translate(-50%,-50%) rotate(360deg);}}
+
+/* Scrollbar */
+#right-panel::-webkit-scrollbar{width:3px;}
+#right-panel::-webkit-scrollbar-thumb{background:rgba(0,255,204,.15);border-radius:2px;}
+
+/* Corner decorations */
+.corner{position:fixed;width:40px;height:40px;z-index:5;pointer-events:none;}
+.corner-tl{top:70px;left:0;border-top:2px solid rgba(0,255,204,.3);border-left:2px solid rgba(0,255,204,.3);}
+.corner-tr{top:70px;right:0;border-top:2px solid rgba(0,255,204,.3);border-right:2px solid rgba(0,255,204,.3);}
+.corner-bl{bottom:0;left:0;border-bottom:2px solid rgba(0,255,204,.3);border-left:2px solid rgba(0,255,204,.3);}
+.corner-br{bottom:0;right:0;border-bottom:2px solid rgba(0,255,204,.3);border-right:2px solid rgba(0,255,204,.3);}
+
+/* Mode button */
+.mode-btn{
+  padding:6px 14px;border-radius:6px;border:1px solid rgba(0,255,204,.2);
+  background:rgba(0,255,204,.05);color:#00ffcc;font-size:10px;
+  font-weight:700;cursor:pointer;letter-spacing:.08em;transition:all .2s;
+}
+.mode-btn:hover{background:rgba(0,255,204,.12);}
+
+.separator{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,204,.15),transparent);margin:2px 0;}
+</style>
+</head>
+<body>
+
+<!-- 3D BACKGROUND -->
+<canvas id="three-canvas"></canvas>
+
+<!-- OVERLAYS -->
+<div id="scanline"></div>
+<div id="grid-overlay"></div>
+<div id="vignette"></div>
+<div class="glow-ring"></div>
+<div class="glow-ring"></div>
+<div class="glow-ring"></div>
+
+<!-- CORNER DECO -->
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MAIN UI -->
+<div id="ui">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="logo">
+      <div class="logo-icon">⚛</div>
+      <div><div class="logo-text">QUANTUMMIND</div><div class="logo-sub">Quantum AI Platform v4.0</div></div>
+    </div>
+    <div class="topbar-center">
+      <div class="tab active" onclick="setTab(this)">Quantum Lab</div>
+      <div class="tab" onclick="setTab(this)">Algorithms</div>
+      <div class="tab" onclick="setTab(this)">Entanglement</div>
+      <div class="tab" onclick="setTab(this)">Error Correction</div>
+      <div class="tab" onclick="setTab(this)">Export</div>
+    </div>
+    <div class="topbar-right">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="status-dot"></div>
+        <span class="status-text">COHERENCE ACTIVE</span>
+      </div>
+      <div class="sys-info" id="sys-clock">00:00:00 UTC</div>
+      <button class="mode-btn" onclick="toggleQuantumMode()">QUANTUM MODE</button>
+    </div>
+  </div>
+
+  <!-- LEFT — AI CHAT -->
+  <div id="left-panel">
+    <div class="panel-header">
+      <span class="panel-title">⚡ Quantum AI Tutor</span>
+      <span class="panel-badge" id="ai-status">ONLINE</span>
+    </div>
+    <div id="chat-messages" class="glass-dark" style="flex:1;padding:14px;"></div>
+    <div id="chat-input-wrap" class="glass">
+      <input id="chat-input" type="text" placeholder="Ask anything quantum..." onkeydown="if(event.key===\'Enter\')sendMsg()">
+      <button id="send-btn" onclick="sendMsg()">↑</button>
+    </div>
+  </div>
+
+  <!-- CENTER TOP — MODEL DISPLAY -->
+  <div id="center-label">
+    <div class="model-label">Active Quantum Model</div>
+    <div class="model-name">QPU-4096</div>
+    <div class="model-sub">4096-QUBIT SUPERCONDUCTING PROCESSOR · 99.9% FIDELITY</div>
+    <div class="quantum-metrics">
+      <div class="qm"><div class="qm-val" id="met-qubits">4096</div><div class="qm-lbl">Qubits</div></div>
+      <div class="qm"><div class="qm-val" id="met-fidelity">99.9%</div><div class="qm-lbl">Fidelity</div></div>
+      <div class="qm"><div class="qm-val" id="met-ops">0</div><div class="qm-lbl">Ops/sec</div></div>
+      <div class="qm"><div class="qm-val" id="met-temp">0.015K</div><div class="qm-lbl">Temp</div></div>
+      <div class="qm"><div class="qm-val" id="met-entangled">0</div><div class="qm-lbl">Entangled</div></div>
+    </div>
+  </div>
+
+  <!-- CENTER BOTTOM — CIRCUIT -->
+  <div id="circuit-bar" class="glass-dark">
+    <div class="circuit-title">◈ Live Quantum Circuit — Bell State Generator</div>
+    <canvas id="circuit-canvas" height="100"></canvas>
+  </div>
+
+  <!-- RIGHT — QUANTUM STATE PANEL -->
+  <div id="right-panel">
+
+    <!-- Qubit State Grid -->
+    <div class="metric-card">
+      <div class="mc-header">
+        <span class="mc-title">⬡ Qubit Register</span>
+        <span class="mc-badge green">LIVE</span>
+      </div>
+      <div class="qubit-grid" id="qubit-grid"></div>
+    </div>
+
+    <!-- System Metrics -->
+    <div class="metric-card">
+      <div class="mc-header">
+        <span class="mc-title">📊 System Metrics</span>
+        <span class="mc-badge green">NOMINAL</span>
+      </div>
+      <div class="gauge-row">
+        <span class="gauge-label">Gate Fidelity</span>
+        <div class="gauge-track"><div class="gauge-fill" id="g-fidelity" style="width:99%;background:linear-gradient(90deg,#00ffcc,#00ff88);"></div></div>
+        <span class="gauge-val" id="gv-fidelity" style="color:#00ffcc">99.9%</span>
+      </div>
+      <div class="gauge-row">
+        <span class="gauge-label">Coherence T2</span>
+        <div class="gauge-track"><div class="gauge-fill" id="g-coherence" style="width:87%;background:linear-gradient(90deg,#a259ff,#00ffcc);"></div></div>
+        <span class="gauge-val" id="gv-coherence" style="color:#a259ff">87μs</span>
+      </div>
+      <div class="gauge-row">
+        <span class="gauge-label">Entanglement</span>
+        <div class="gauge-track"><div class="gauge-fill" id="g-ent" style="width:94%;background:linear-gradient(90deg,#ff6b9d,#a259ff);"></div></div>
+        <span class="gauge-val" id="gv-ent" style="color:#ff6b9d">94%</span>
+      </div>
+      <div class="gauge-row">
+        <span class="gauge-label">Error Rate</span>
+        <div class="gauge-track"><div class="gauge-fill" id="g-error" style="width:2%;background:linear-gradient(90deg,#ff3c3c,#ff6b9d);"></div></div>
+        <span class="gauge-val" id="gv-error" style="color:#ff3c3c">0.1%</span>
+      </div>
+      <div class="gauge-row">
+        <span class="gauge-label">CPU Load</span>
+        <div class="gauge-track"><div class="gauge-fill" id="g-cpu" style="width:45%;background:linear-gradient(90deg,#ffc800,#ff8800);"></div></div>
+        <span class="gauge-val" id="gv-cpu" style="color:#ffc800">45%</span>
+      </div>
+    </div>
+
+    <!-- State Vector -->
+    <div class="metric-card">
+      <div class="mc-header">
+        <span class="mc-title">|ψ⟩ State Vector</span>
+        <span class="mc-badge yellow">SUPERPOSED</span>
+      </div>
+      <div id="sv-container"></div>
+    </div>
+
+    <!-- Quantum Advantage -->
+    <div class="metric-card">
+      <div class="mc-header">
+        <span class="mc-title">⚡ Quantum Advantage</span>
+        <span class="mc-badge green">ACTIVE</span>
+      </div>
+      <div class="algo-row" onclick="runAlgo(\'Grover\')"><span class="algo-name">Grover\'s Search</span><span class="algo-speedup">√N faster</span></div>
+      <div class="algo-row" onclick="runAlgo(\'Shor\')"><span class="algo-name">Shor\'s Factoring</span><span class="algo-speedup">Exp. faster</span></div>
+      <div class="algo-row" onclick="runAlgo(\'QFT\')"><span class="algo-name">Quantum Fourier Transform</span><span class="algo-speedup">Poly faster</span></div>
+      <div class="algo-row" onclick="runAlgo(\'VQE\')"><span class="algo-name">VQE Optimization</span><span class="algo-speedup">Quantum Native</span></div>
+      <div class="algo-row" onclick="runAlgo(\'QAOA\')"><span class="algo-name">QAOA</span><span class="algo-speedup">NP Approx</span></div>
+    </div>
+
+    <!-- Decoherence Timer -->
+    <div class="metric-card">
+      <div class="mc-header">
+        <span class="mc-title">⏱ Decoherence Timer</span>
+        <span class="mc-badge green">STABLE</span>
+      </div>
+      <div style="text-align:center;padding:10px;">
+        <div style="font-size:32px;font-weight:900;color:#00ffcc;font-family:monospace;letter-spacing:.05em;" id="decoherence-timer">00:00:00</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:4px;letter-spacing:.1em">TIME UNTIL NEXT CALIBRATION</div>
+        <div style="margin-top:10px;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;">
+          <div id="calib-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#00ffcc,#a259ff);border-radius:2px;transition:width .5s;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// THREE.JS QUANTUM PROCESSOR 3D
+// =====================================================================
+(function(){
+  const canvas = document.getElementById(\'three-canvas\');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setClearColor(0x000000, 1);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x000510, 0.018);
+
+  const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
+  camera.position.set(0, 6, 22);
+  camera.lookAt(0, 0, 0);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0x001122, 1));
+  const l1 = new THREE.PointLight(0x00ffcc, 3, 40); l1.position.set(0,8,0); scene.add(l1);
+  const l2 = new THREE.PointLight(0xa259ff, 2, 30); l2.position.set(-10,4,0); scene.add(l2);
+  const l3 = new THREE.PointLight(0xff6b9d, 1.5, 25); l3.position.set(10,-4,5); scene.add(l3);
+
+  // QUANTUM PROCESSOR GRID (qubit array)
+  const ROWS = 8, COLS = 8;
+  const qubits = [];
+  const spacing = 2.2;
+
+  // Base plate
+  const plateGeo = new THREE.BoxGeometry(COLS*spacing+2, 0.15, ROWS*spacing+2);
+  const plateMat = new THREE.MeshPhongMaterial({color:0x001a33,transparent:true,opacity:0.7,shininess:80});
+  const plate = new THREE.Mesh(plateGeo, plateMat);
+  plate.position.y = -0.5;
+  scene.add(plate);
+
+  // Grid lines on plate
+  const gridHelper = new THREE.GridHelper(COLS*spacing+1, COLS, 0x00ffcc, 0x003333);
+  gridHelper.material.transparent = true;
+  gridHelper.material.opacity = 0.3;
+  gridHelper.position.y = -0.42;
+  scene.add(gridHelper);
+
+  // Qubit nodes
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const g = new THREE.SphereGeometry(0.35, 16, 16);
+      const m = new THREE.MeshPhongMaterial({
+        color: 0x00ffcc, emissive:0x003322, shininess:120,
+        transparent:true, opacity:0.9
+      });
+      const mesh = new THREE.Mesh(g, m);
+      mesh.position.set((c-COLS/2+0.5)*spacing, 0, (r-ROWS/2+0.5)*spacing);
+      scene.add(mesh);
+
+      // Glow ring around each qubit
+      const rg = new THREE.TorusGeometry(0.5, 0.04, 8, 32);
+      const rm = new THREE.MeshBasicMaterial({color:0x00ffcc, transparent:true, opacity:0.3});
+      const ring = new THREE.Mesh(rg, rm);
+      ring.rotation.x = Math.PI/2;
+      ring.position.copy(mesh.position);
+      scene.add(ring);
+
+      // Vertical connector
+      const cg = new THREE.CylinderGeometry(0.03, 0.03, 0.5, 6);
+      const cm = new THREE.MeshBasicMaterial({color:0x00ffcc, transparent:true, opacity:0.4});
+      const cyl = new THREE.Mesh(cg, cm);
+      cyl.position.copy(mesh.position);
+      cyl.position.y -= 0.25;
+      scene.add(cyl);
+
+      qubits.push({mesh, ring, mat:m, ringMat:rm, r, c, state:0, phase:Math.random()*Math.PI*2, speed:0.5+Math.random()*1.5});
+    }
+  }
+
+  // Entanglement lines between qubits
+  const entLines = [];
+  function makeEntLine(q1, q2, color){
+    const g = new THREE.BufferGeometry().setFromPoints([q1.mesh.position.clone(), q2.mesh.position.clone()]);
+    const m = new THREE.LineBasicMaterial({color, transparent:true, opacity:0});
+    const line = new THREE.Line(g,m);
+    scene.add(line);
+    entLines.push({line, mat:m, q1, q2, active:false});
+    return entLines[entLines.length-1];
+  }
+
+  // Create some entanglement pairs
+  const entPairs = [];
+  for(let i=0;i<12;i++){
+    const qi = Math.floor(Math.random()*qubits.length);
+    const qj = Math.floor(Math.random()*qubits.length);
+    if(qi!==qj) entPairs.push(makeEntLine(qubits[qi], qubits[qj], 0xff6b9d));
+  }
+
+  // Central holographic atom (above processor)
+  const atomGroup = new THREE.Group();
+  atomGroup.position.y = 6;
+  scene.add(atomGroup);
+
+  const nucleus = new THREE.Mesh(
+    new THREE.SphereGeometry(0.8,32,32),
+    new THREE.MeshPhongMaterial({color:0x00ffcc, emissive:0x00ffcc, emissiveIntensity:0.4, shininess:200})
+  );
+  atomGroup.add(nucleus);
+
+  // Electron orbitals (3 rings at different angles)
+  const orbColors = [0x00ffcc, 0xa259ff, 0xff6b9d];
+  const orbRings = [];
+  const electrons = [];
+  for(let i=0;i<3;i++){
+    const orb = new THREE.Mesh(
+      new THREE.TorusGeometry(2.5+i*0.3, 0.04, 8, 80),
+      new THREE.MeshBasicMaterial({color:orbColors[i], transparent:true, opacity:0.4})
+    );
+    orb.rotation.x = i * Math.PI/3;
+    orb.rotation.z = i * Math.PI/4;
+    atomGroup.add(orb);
+    orbRings.push(orb);
+
+    // Electron
+    const em = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2,12,12),
+      new THREE.MeshBasicMaterial({color:orbColors[i]})
+    );
+    em.userData = {orb:i, angle:i*Math.PI*2/3, radius:2.5+i*0.3};
+    atomGroup.add(em);
+    electrons.push(em);
+  }
+
+  // Probability cloud around nucleus
+  const cloudCount = 600;
+  const cloudGeo = new THREE.BufferGeometry();
+  const cloudPos = new Float32Array(cloudCount*3);
+  const cloudVel = new Float32Array(cloudCount*3);
+  for(let i=0;i<cloudCount;i++){
+    const r2 = 1.2 + Math.random()*2.5;
+    const th = Math.random()*Math.PI*2;
+    const ph = Math.random()*Math.PI;
+    cloudPos[i*3] = r2*Math.sin(ph)*Math.cos(th);
+    cloudPos[i*3+1] = r2*Math.cos(ph);
+    cloudPos[i*3+2] = r2*Math.sin(ph)*Math.sin(th);
+    cloudVel[i*3] = (Math.random()-.5)*.02;
+    cloudVel[i*3+1] = (Math.random()-.5)*.02;
+    cloudVel[i*3+2] = (Math.random()-.5)*.02;
+  }
+  cloudGeo.setAttribute(\'position\', new THREE.BufferAttribute(cloudPos, 3));
+  const cloudMat = new THREE.PointsMaterial({color:0x00ffcc, size:0.08, transparent:true, opacity:0.5});
+  const cloud = new THREE.Points(cloudGeo, cloudMat);
+  atomGroup.add(cloud);
+
+  // Background star field
+  const starCount = 2000;
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(starCount*3);
+  for(let i=0;i<starCount;i++){
+    starPos[i*3] = (Math.random()-.5)*300;
+    starPos[i*3+1] = (Math.random()-.5)*200;
+    starPos[i*3+2] = (Math.random()-.5)*200 - 50;
+  }
+  starGeo.setAttribute(\'position\', new THREE.BufferAttribute(starPos,3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x334455, size:0.3, transparent:true, opacity:0.8}));
+  scene.add(stars);
+
+  // Floating data particles (stream upward)
+  const dataCount = 300;
+  const dataGeo = new THREE.BufferGeometry();
+  const dataPos = new Float32Array(dataCount*3);
+  const dataPhase = new Float32Array(dataCount);
+  for(let i=0;i<dataCount;i++){
+    dataPos[i*3] = (Math.random()-.5)*30;
+    dataPos[i*3+1] = (Math.random()-.5)*20;
+    dataPos[i*3+2] = (Math.random()-.5)*15;
+    dataPhase[i] = Math.random()*Math.PI*2;
+  }
+  dataGeo.setAttribute(\'position\', new THREE.BufferAttribute(dataPos,3));
+  const dataMat = new THREE.PointsMaterial({color:0x00ffcc, size:0.12, transparent:true, opacity:0.6});
+  const dataParticles = new THREE.Points(dataGeo, dataMat);
+  scene.add(dataParticles);
+
+  // Mouse interaction
+  let mouseX=0, mouseY=0;
+  document.addEventListener(\'mousemove\', e=>{
+    mouseX = (e.clientX/innerWidth-.5)*2;
+    mouseY = (e.clientY/innerHeight-.5)*2;
+  });
+
+  // Resize
+  window.addEventListener(\'resize\',()=>{
+    renderer.setSize(innerWidth,innerHeight);
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  let t=0, entTimer=0;
+  const ENTANGLE_INTERVAL = 3;
+
+  function animate(){
+    requestAnimationFrame(animate);
+    t += 0.016;
+    entTimer += 0.016;
+
+    // Camera gentle orbit
+    camera.position.x += (mouseX*5 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY*3 + 6 - camera.position.y) * 0.02;
+    camera.lookAt(0,3,0);
+
+    // Animate qubits
+    qubits.forEach((q,i)=>{
+      const wave = Math.sin(t*q.speed + q.phase);
+      q.mesh.position.y = wave * 0.3;
+      const bright = (wave+1)*0.5;
+      const r = q.state===1 ? 0.66 : 0;
+      const g = q.state===1 ? 0.35 : 1;
+      const b = q.state===2 ? 0.62 : q.state===1 ? 1 : 0.8;
+      q.mat.emissive.setRGB(r*bright*0.3, g*bright*0.3, b*bright*0.3);
+      q.ring.position.y = q.mesh.position.y;
+      q.ring.rotation.z = t*q.speed*0.5;
+      q.ringMat.opacity = 0.1 + bright*0.4;
+    });
+
+    // Entanglement pulse
+    if(entTimer > ENTANGLE_INTERVAL){
+      entTimer = 0;
+      entPairs.forEach(ep=>{
+        ep.mat.opacity = ep.active ? 0 : 0.6;
+        ep.active = !ep.active;
+      });
+    }
+    entPairs.forEach(ep=>{
+      if(ep.active) ep.mat.opacity = Math.max(0, ep.mat.opacity - 0.005);
+    });
+
+    // Atom animation
+    atomGroup.rotation.y = t*0.2;
+    nucleus.material.emissiveIntensity = 0.3 + Math.sin(t*2)*0.2;
+    orbRings.forEach((orb,i)=>{ orb.rotation.y = t*(0.5+i*0.3); });
+    electrons.forEach((e,i)=>{
+      e.userData.angle += 0.02*(1+i*0.3);
+      const d = e.userData;
+      const localX = Math.cos(d.angle)*d.radius;
+      const localZ = Math.sin(d.angle)*d.radius;
+      // Apply orbital tilt
+      const tilt = i*Math.PI/3;
+      e.position.x = localX;
+      e.position.y = localZ*Math.sin(tilt);
+      e.position.z = localZ*Math.cos(tilt);
+    });
+
+    // Cloud drift
+    const cp = cloudGeo.attributes.position.array;
+    for(let i=0;i<cloudCount;i++){
+      cp[i*3] += cloudVel[i*3];
+      cp[i*3+1] += cloudVel[i*3+1];
+      cp[i*3+2] += cloudVel[i*3+2];
+      const dist = Math.sqrt(cp[i*3]**2+cp[i*3+1]**2+cp[i*3+2]**2);
+      if(dist>4||dist<0.5){
+        cloudVel[i*3]*=-1; cloudVel[i*3+1]*=-1; cloudVel[i*3+2]*=-1;
+      }
+    }
+    cloudGeo.attributes.position.needsUpdate=true;
+
+    // Data particles drift up
+    const dp = dataGeo.attributes.position.array;
+    for(let i=0;i<dataCount;i++){
+      dp[i*3+1] += 0.04;
+      if(dp[i*3+1]>15) dp[i*3+1]=-10;
+      dp[i*3] += Math.sin(t+dataPhase[i])*0.01;
+    }
+    dataGeo.attributes.position.needsUpdate=true;
+
+    // Nucleus pulsing light
+    l1.intensity = 2+Math.sin(t*3)*1;
+    l2.intensity = 1.5+Math.cos(t*2.5)*0.8;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window._qubits = qubits;
+})();
+
+// =====================================================================
+// CIRCUIT CANVAS
+// =====================================================================
+(function(){
+  const canvas = document.getElementById(\'circuit-canvas\');
+  const W = canvas.parentElement.clientWidth - 32;
+  canvas.width = W; canvas.height = 100;
+  const ctx = canvas.getContext(\'2d\');
+
+  const gates = [
+    {label:\'H\',color:\'#00ffcc\'},
+    {label:\'CNOT\',color:\'#a259ff\'},
+    {label:\'X\',color:\'#ff6b9d\'},
+    {label:\'S\',color:\'#00ffcc\'},
+    {label:\'T\',color:\'#ffc800\'},
+    {label:\'Z\',color:\'#00ffcc\'},
+    {label:\'CX\',color:\'#a259ff\'},
+    {label:\'M\',color:\'#ff6b9d\'},
+  ];
+  const QUBITS = 3;
+  let animT = 0;
+
+  function drawCircuit(){
+    ctx.clearRect(0,0,W,100);
+    ctx.fillStyle = \'rgba(5,5,20,0)\'; ctx.fillRect(0,0,W,100);
+    const rowH = 30, startY = 18, startX = 60, slotW = (W-startX-20)/gates.length;
+
+    // Qubit labels + wires
+    for(let q=0;q<QUBITS;q++){
+      const y = startY + q*rowH;
+      ctx.fillStyle = \'rgba(0,255,204,.7)\'; ctx.font = \'bold 11px monospace\';
+      ctx.textAlign = \'center\'; ctx.textBaseline = \'middle\';
+      ctx.fillText(\'q\'+q, 28, y);
+      ctx.strokeStyle = \'rgba(0,255,204,.2)\'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(50,y); ctx.lineTo(W-10,y); ctx.stroke();
+    }
+
+    // Animated gate highlight
+    const activeGate = Math.floor(animT / 0.5) % gates.length;
+
+    gates.forEach((g,i)=>{
+      const x = startX + i*slotW + slotW/2;
+      const isActive = i===activeGate;
+      const y0 = startY;
+      const q = i%QUBITS;
+      const y = startY + q*rowH;
+
+      // Gate box
+      ctx.save();
+      if(isActive){ ctx.shadowColor=g.color; ctx.shadowBlur=15; }
+      ctx.strokeStyle = isActive ? g.color : g.color+\'55\';
+      ctx.lineWidth = isActive ? 1.5 : 1;
+      ctx.fillStyle = isActive ? g.color+\'22\' : g.color+\'0a\';
+      const sz = 26;
+      ctx.beginPath();
+      ctx.roundRect(x-sz/2, y-sz/2, sz, sz, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isActive ? g.color : g.color+\'88\';
+      ctx.font = \'bold 9px monospace\'; ctx.textAlign=\'center\'; ctx.textBaseline=\'middle\';
+      ctx.fillText(g.label, x, y);
+      ctx.restore();
+
+      // CNOT connector
+      if(g.label===\'CNOT\'||g.label===\'CX\'){
+        ctx.strokeStyle=g.color+\'66\'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+rowH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(x,y+rowH,5,0,Math.PI*2);
+        ctx.strokeStyle=g.color; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    });
+  }
+
+  function loop(){
+    requestAnimationFrame(loop);
+    animT+=0.02;
+    drawCircuit();
+  }
+  loop();
+})();
+
+// =====================================================================
+// QUBIT GRID UI
+// =====================================================================
+(function(){
+  const grid = document.getElementById(\'qubit-grid\');
+  const CELLS = 32;
+  const cells = [];
+  const states = [\'zero\',\'one\',\'entangled\'];
+  for(let i=0;i<CELLS;i++){
+    const d = document.createElement(\'div\');
+    d.className=\'qubit-cell zero\'; d.textContent=\'0\';
+    grid.appendChild(d); cells.push(d);
+  }
+  function randomizeQubits(){
+    cells.forEach((c,i)=>{
+      const s = Math.random()<.55?0:Math.random()<.5?1:2;
+      c.className=\'qubit-cell \'+states[s];
+      c.textContent=s===0?\'0\':(s===1?\'1\':\'⊕\');
+    });
+  }
+  setInterval(randomizeQubits, 1200);
+  randomizeQubits();
+})();
+
+// =====================================================================
+// STATE VECTOR
+// =====================================================================
+(function(){
+  const svStates = [\'|00⟩\',\'|01⟩\',\'|10⟩\',\'|11⟩\'];
+  function updateSV(){
+    const cont = document.getElementById(\'sv-container\');
+    let vals = svStates.map(()=>Math.random());
+    const tot = vals.reduce((a,b)=>a+b,0);
+    vals = vals.map(v=>v/tot);
+    cont.innerHTML = vals.map((v,i)=>{
+      const pct = Math.round(v*100);
+      return `<div class="sv-row">
+        <span class="sv-state">${svStates[i]}</span>
+        <div class="sv-bar-track"><div class="sv-bar-fill" style="width:${pct}%"></div></div>
+        <span class="sv-prob">${pct}%</span>
+      </div>`;
+    }).join(\'\');
+  }
+  setInterval(updateSV, 1800);
+  updateSV();
+})();
+
+// =====================================================================
+// METRICS LIVE UPDATE
+// =====================================================================
+(function(){
+  let opsBase = 128000, entBase = 2048;
+  function update(){
+    document.getElementById(\'met-ops\').textContent = (opsBase+Math.floor(Math.random()*10000)).toLocaleString();
+    document.getElementById(\'met-entangled\').textContent = entBase+Math.floor(Math.random()*100);
+    const fid = (99.5+Math.random()*.5).toFixed(2);
+    document.getElementById(\'met-fidelity\').textContent = fid+\'%\';
+    const err = (0.05+Math.random()*.1).toFixed(3);
+    document.getElementById(\'gv-error\').textContent = err+\'%\';
+    document.getElementById(\'g-error\').style.width = err*100+\'%\';
+    const cpu = Math.floor(30+Math.random()*40);
+    document.getElementById(\'gv-cpu\').textContent = cpu+\'%\';
+    document.getElementById(\'g-cpu\').style.width = cpu+\'%\';
+    const coh = Math.floor(80+Math.random()*15);
+    document.getElementById(\'gv-coherence\').textContent = coh+\'μs\';
+    document.getElementById(\'g-coherence\').style.width = coh+\'%\';
+  }
+  setInterval(update, 1500);
+  update();
+})();
+
+// =====================================================================
+// DECOHERENCE TIMER
+// =====================================================================
+(function(){
+  let secs = 3600*4;
+  const total = secs;
+  function tick(){
+    secs--;
+    if(secs<0) secs=total;
+    const h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), s=secs%60;
+    document.getElementById(\'decoherence-timer\').textContent=
+      String(h).padStart(2,\'0\')+\':\'+String(m).padStart(2,\'0\')+\':\'+String(s).padStart(2,\'0\');
+    document.getElementById(\'calib-bar\').style.width = (secs/total*100)+\'%\';
+  }
+  setInterval(tick,1000);
+  tick();
+})();
+
+// =====================================================================
+// SYSTEM CLOCK
+// =====================================================================
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById(\'sys-clock\').textContent=
+    n.toISOString().slice(0,19).replace(\'T\',' \')+\' UTC\';
+},1000);
+
+// =====================================================================
+// TOAST NOTIFICATIONS
+// =====================================================================
+const toastMessages=[
+  [\'⚡\',\'Quantum Advantage Detected\',\'2^53× speedup\'  ],
+  [\'🔗\',\'Entanglement Established\',\'Bell State Φ+\' ],
+  [\'📊\',\'Gate Fidelity Update\',\'99.97%\'           ],
+  [\'⚠\',\'Decoherence Warning — q37\',\'T2 = 42μs\'    ],
+  [\'✅\',\'Error Correction Applied\',\'Surface Code\'  ],
+  [\'🔬\',\'Measurement Collapsed\',\'|1⟩ outcome\'     ],
+  [\'🌐\',\'Quantum Network Sync\',\'3ms latency\'      ],
+  [\'🔑\',\'QKD Key Generated\',\'256-qubit key\'       ],
+  [\'💡\',\'VQE Converged\',\'E = -1.137 Hartree\'     ],
+  [\'⚛\',\'Grover Search Complete\',\'√N iterations\'  ],
+];
+function showToast(icon,msg,val){
+  const c=document.getElementById(\'toast-container\');
+  const t=document.createElement(\'div\'); t.className=\'toast\';
+  t.innerHTML=`<span class="toast-icon">${icon}</span><span class="toast-msg">${msg}</span><span class="toast-val">${val}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.style.opacity=\'0\',3500);
+  setTimeout(()=>t.remove(),4000);
+}
+function randomToast(){
+  const [ic,m,v]=toastMessages[Math.floor(Math.random()*toastMessages.length)];
+  showToast(ic,m,v);
+}
+setInterval(randomToast,3500);
+setTimeout(()=>showToast(\'⚛\',\'QuantumMind AI Online\',\'Ready\'),800);
+
+// =====================================================================
+// TABS
+// =====================================================================
+function setTab(el){
+  document.querySelectorAll(\'.tab\').forEach(t=>t.classList.remove(\'active\'));
+  el.classList.add(\'active\');
+}
+
+// =====================================================================
+// QUANTUM MODE TOGGLE
+// =====================================================================
+let qMode=false;
+function toggleQuantumMode(){
+  qMode=!qMode;
+  document.documentElement.style.setProperty(\'--c\', qMode?\'#ff6b9d\':\'#00ffcc\');
+  showToast(qMode?\'🔴\':\'🟢\', qMode?\'Quantum Mode: MAXIMIZED\':\'Quantum Mode: STANDARD\', qMode?\'MAX COHERENCE\':\'NOMINAL\');
+}
+
+// =====================================================================
+// ALGORITHM RUN
+// =====================================================================
+function runAlgo(name){
+  const msgs={
+    Grover:[\'Running Grover\'s Search…\',\'Target found in √N = 64 steps!\',\'Speedup: 2048× vs classical\'  ],
+    Shor:  [\'Initializing Shor\'s Algorithm…\',\'Quantum Fourier Transform applied!\',\'RSA-2048 factors found\'  ],
+    QFT:   [\'Applying Quantum Fourier Transform…\',\'Phase estimation complete!\',\'Precision: 10^-15\'          ],
+    VQE:   [\'Initializing VQE…\',\'Variational ansatz optimized!\',\'Ground state energy: -1.137 Ha\'  ],
+    QAOA:  [\'Running QAOA optimizer…\',\'Max-Cut solution found!\',\'Approximation ratio: 0.997\'     ],
+  };
+  const steps = msgs[name]||[\'Running…\',\'Complete!\'];
+  steps.forEach((s,i)=>setTimeout(()=>addAIMsg(s),800+i*900));
+  showToast(\'⚡\',name+\' Started\',\'Quantum\'  );
+}
+
+// =====================================================================
+// AI CHAT
+// =====================================================================
+const aiResponses={
+  bloch:[\'The Bloch sphere represents a qubit state as a point on a unit sphere. The north pole is |0⟩ and south pole is |1⟩. Any point on the surface is a valid pure state!\'  ],
+  entangle:[\'Quantum entanglement creates non-local correlations between qubits. Measuring one instantly determines the other — Einstein called it "spooky action at a distance"!\'  ],
+  gate:[\'Quantum gates are unitary operations on qubits. The Hadamard gate H = (|0⟩+|1⟩)/√2 creates superposition. CNOT creates entanglement between control and target qubits.\'  ],
+  grover:[\'Grover\'s algorithm finds a target item in an unsorted database of N items in O(√N) steps — a quadratic speedup over classical O(N) search. It uses amplitude amplification.\'  ],
+  superposition:[\'Superposition means a qubit exists in both |0⟩ and |1⟩ simultaneously, described by α|0⟩+β|1⟩ where |α|²+|β|²=1. Measurement collapses it to a definite state.\'  ],
+  error:[\'Quantum error correction uses codes like the Surface Code or Shor Code to detect and fix errors without collapsing superposition. It encodes 1 logical qubit in ~100 physical qubits.\'  ],
+  default:[\'QPU-4096 is processing your query through the quantum circuit… I can explain Bloch spheres, entanglement, quantum gates, algorithms, error correction, and more!\'  ]
+};
+const initialMessages=[
+  {role:\'ai\',text:\'⚛ QPU-4096 online. 4096 qubits initialized, coherence stable. Ask me anything about quantum computing!\'},
+  {role:\'user\',text:\'What is quantum superposition?\'},
+  {role:\'ai\',text:\'Superposition means a qubit is in both |0⟩ and |1⟩ simultaneously. Only measurement collapses it. This gives quantum computers exponential parallelism!\'},
+];
+
+function addMsg(role, text){
+  const chat=document.getElementById(\'chat-messages\');
+  const isAI=role===\'ai\';
+  const d=document.createElement(\'div\'); d.className=\'msg \'+role;
+  d.innerHTML=`<div class="msg-avatar ${role}">${isAI?\'⚛\':\'U\'}</div>
+    <div class="msg-bubble ${role}">${text}</div>`;
+  chat.appendChild(d);
+  chat.scrollTop=chat.scrollHeight;
+}
+function addAIMsg(text){ addMsg(\'ai\',text); }
+
+function showTyping(){
+  const chat=document.getElementById(\'chat-messages\');
+  const d=document.createElement(\'div\'); d.className=\'msg ai\'; d.id=\'typing\';
+  d.innerHTML=`<div class="msg-avatar ai">⚛</div>
+    <div class="msg-bubble ai typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
+}
+function removeTyping(){ const t=document.getElementById(\'typing\'); if(t) t.remove(); }
+
+function getAIReply(text){
+  const t=text.toLowerCase();
+  if(t.includes(\'bloch\')||t.includes(\'sphere\')) return aiResponses.bloch[0];
+  if(t.includes(\'entangl\')||t.includes(\'bell\')) return aiResponses.entangle[0];
+  if(t.includes(\'gate\')||t.includes(\'hadamard\')||t.includes(\'cnot\')) return aiResponses.gate[0];
+  if(t.includes(\'grover\')||t.includes(\'search\')) return aiResponses.grover[0];
+  if(t.includes(\'superpos\')) return aiResponses.superposition[0];
+  if(t.includes(\'error\')||t.includes(\'correct\')) return aiResponses.error[0];
+  return aiResponses.default[0];
+}
+
+function sendMsg(){
+  const inp=document.getElementById(\'chat-input\');
+  const text=inp.value.trim(); if(!text) return;
+  inp.value=\'\'; addMsg(\'user\',text);
+  showTyping();
+  setTimeout(()=>{ removeTyping(); addAIMsg(getAIReply(text)); },1200+Math.random()*600);
+}
+
+// Init messages with delay
+initialMessages.forEach((m,i)=>setTimeout(()=>addMsg(m.role,m.text),(i+1)*500));
+</script>
+</body>
+</html>
+'''
+
+with open('/data/quantummind_interface.html','w',encoding='utf-8') as f:
+    f.write(html)
+print('Done! Size:', len(html))

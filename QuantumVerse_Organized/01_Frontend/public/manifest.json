@@ -1,0 +1,19 @@
+{
+  "name": "QuantumVerse AI",
+  "short_name": "QuantumVerse",
+  "description": "AI-Powered Quantum Algorithm Learning Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080812",
+  "theme_color": "#00d4ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png",  "sizes": "192x192",  "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png",  "sizes": "512x512",  "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["education", "science"],
+  "screenshots": [
+    { "src": "/screenshot-desktop.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide" },
+    { "src": "/screenshot-mobile.png",  "sizes": "390x844",  "type": "image/png", "form_factor": "narrow" }
+  ]
+}
