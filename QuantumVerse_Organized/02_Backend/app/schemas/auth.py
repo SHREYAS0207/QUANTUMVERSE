@@ -69,7 +69,9 @@ class UserResponse(BaseModel):
         ) if profile else UserStatistics()
         return cls(
             id=str(obj.id), name=obj.name, email=obj.email,
-            learning_level=obj.learning_level or "beginner",
-            xp=obj.xp or 0, level=obj.level or 1, streak_days=obj.streak_days or 0,
+            learning_level=(obj.profile.learning_level if obj.profile else "beginner"),
+            xp=getattr(profile, "xp", 0) or 0,
+            level=getattr(profile, "level", 1) or 1,
+            streak_days=getattr(profile, "streak_days", 0) or 0,
             statistics=stats,
         )
