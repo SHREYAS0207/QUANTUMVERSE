@@ -1,24 +1,20 @@
+import api from "@/lib/api";
 import type { AuthTokens, User } from "@/types/user";
 
-const USERS_KEY = "qv_mock_users";
-const SESSION_KEY = "qv_mock_session";
-
-interface StoredUser extends User {
-  password: string;
+interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  name: string;
+  email: string;
+  learning_level: string;
 }
 
-const buildUser = (
-  id: string,
-  name: string,
-  email: string,
-  password: string,
-  learning_level: string
-): StoredUser => ({
-  id,
-  name,
-  email,
-  password,
-  learning_level: learning_level as User["learning_level"],
+const mapUser = (data: AuthResponse): User => ({
+  id: data.user_id,
+  name: data.name,
+  email: data.email,
+  learning_level: data.learning_level as User["learning_level"],
   xp: 0,
   level: 1,
   streak_days: 0,
@@ -30,124 +26,87 @@ const buildUser = (
   },
 });
 
-const readUsers = (): StoredUser[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? (JSON.parse(raw) as StoredUser[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeUsers = (users: StoredUser[]) => {
+const saveToken = (token: string) => {
   if (typeof window !== "undefined") {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    localStorage.setItem("qv_token", token);
+    document.cookie = `qv_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
   }
 };
 
-const writeSession = (user: User, token: string) => {
+const clearToken = () => {
   if (typeof window !== "undefined") {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, token }));
-  }
-};
-
-const readSession = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
+    localStorage.removeItem("qv_token");
+    localStorage.removeItem("qv_user");
+    document.cookie = "qv_token=; path=/; max-age=0; SameSite=Lax";
   }
 };
 
 export const authService = {
-  async signup(name: string, email: string, password: string, learning_level: string): Promise<AuthTokens> {
-    const users = readUsers();
-    if (users.some((user) => user.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error("Email already registered");
-    }
-
-    const newUser = buildUser(
-      crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+  async signup(
+    name: string,
+    email: string,
+    password: string,
+    learning_level: string
+  ): Promise<AuthTokens> {
+    const { data } = await api.post<AuthResponse>("/auth/signup", {
       name,
       email,
       password,
-      learning_level
-    );
+      learning_level,
+    });
 
-    users.push(newUser);
-    writeUsers(users);
-
-    const token = `mock_token_${Date.now()}`;
-    writeSession(newUser, token);
+    const user = mapUser(data);
+    saveToken(data.access_token);
 
     return {
-      access_token: token,
-      token_type: "bearer",
-      user_id: newUser.id,
-      name: newUser.name,
-      email: newUser.email,
-      learning_level: newUser.learning_level,
+      access_token: data.access_token,
+      token_type: data.token_type,
+      user_id: data.user_id,
+      name: data.name,
+      email: data.email,
+      learning_level: data.learning_level,
     };
   },
 
   async login(email: string, password: string): Promise<AuthTokens> {
-    const users = readUsers();
-    const user = users.find((entry) => entry.email.toLowerCase() === email.toLowerCase());
+    const { data } = await api.post<AuthResponse>("/auth/login", {
+      email,
+      password,
+    });
 
-    if (!user || user.password !== password) {
-      throw new Error("Invalid email or password");
-    }
-
-    const token = `mock_token_${Date.now()}`;
-    writeSession(user, token);
+    saveToken(data.access_token);
 
     return {
-      access_token: token,
-      token_type: "bearer",
-      user_id: user.id,
-      name: user.name,
-      email: user.email,
-      learning_level: user.learning_level,
+      access_token: data.access_token,
+      token_type: data.token_type,
+      user_id: data.user_id,
+      name: data.name,
+      email: data.email,
+      learning_level: data.learning_level,
     };
   },
 
   async getProfile(): Promise<User> {
-    const session = readSession();
-    if (!session?.user) {
-      throw new Error("No active session found");
+    const { data } = await api.get<User>("/auth/profile");
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("qv_user", JSON.stringify(data));
     }
 
-    return session.user as User;
+    return data;
   },
 
   async updateProfile(updates: Partial<User>): Promise<User> {
-    const session = readSession();
-    if (!session?.user) {
-      throw new Error("No active session found");
+    const { data } = await api.put<User>("/auth/profile", updates);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("qv_user", JSON.stringify(data));
     }
 
-    const users = readUsers();
-    const userIndex = users.findIndex((entry) => entry.email.toLowerCase() === session.user.email.toLowerCase());
+    return data;
+  },
 
-    if (userIndex >= 0) {
-      const updatedUser = {
-        ...users[userIndex],
-        ...updates,
-        statistics: {
-          ...users[userIndex].statistics,
-          ...(updates.statistics ?? {}),
-        },
-      };
-
-      users[userIndex] = updatedUser;
-      writeUsers(users);
-      writeSession(updatedUser, session.token);
-      return updatedUser;
-    }
-
-    return session.user as User;
+  logout(): void {
+    clearToken();
   },
 };
