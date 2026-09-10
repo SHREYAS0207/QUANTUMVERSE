@@ -3,3 +3,19 @@ node_modules/
 node_modules/  
 .next/  
 *.zip 
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+.env.backup
+
+# Local Docker/Compose workaround
+QuantumVerse_Organized/05_DevOps/backend
