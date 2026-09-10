@@ -27,13 +27,36 @@ export default function QuantumLabPage() {
   const [
     selectedGate, setSelectedGate
   ] = useState<GateInfo | null>(null);
+  const [multiQubitStart, setMultiQubitStart] = useState<number | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("results");
   const circuit = useCircuit();
 
   const handleCellClick = (qubit: number, column: number) => {
     if (!selectedGate) return;
-    const controls: number[] = [];
-    circuit.addGate(selectedGate.type, [qubit], controls, column);
+
+    const isMultiQubit = ["CNOT", "CX", "CZ", "SWAP"].includes(selectedGate.type);
+
+    if (isMultiQubit) {
+      if (multiQubitStart === null) {
+        setMultiQubitStart(qubit);
+        return;
+      }
+
+      if (multiQubitStart === qubit) {
+        return;
+      }
+
+      circuit.addGate(
+        selectedGate.type,
+        [qubit],
+        [multiQubitStart],
+        column
+      );
+      setMultiQubitStart(null);
+      return;
+    }
+
+    circuit.addGate(selectedGate.type, [qubit], [], column);
   };
 
   const handleLoadTemplate = (tpl: typeof TEMPLATES[0]) => {

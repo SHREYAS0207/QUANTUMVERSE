@@ -61,12 +61,14 @@ class UserResponse(BaseModel):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         profile = getattr(obj, "profile", None)
+        statistics = getattr(obj, "statistics", None)
+
         stats = UserStatistics(
-            total_lessons=getattr(profile, "total_lessons", 0) or 0,
-            total_circuits=getattr(profile, "total_circuits", 0) or 0,
-            total_quizzes=getattr(profile, "total_quizzes", 0) or 0,
-            quiz_accuracy=getattr(profile, "quiz_accuracy", 0.0) or 0.0,
-        ) if profile else UserStatistics()
+            total_lessons=getattr(statistics, "total_lessons_completed", 0) or 0,
+            total_circuits=getattr(statistics, "total_circuits_created", 0) or 0,
+            total_quizzes=getattr(statistics, "total_quizzes_taken", 0) or 0,
+            quiz_accuracy=getattr(statistics, "total_quiz_accuracy", 0.0) or 0.0,
+        ) if statistics else UserStatistics()
         return cls(
             id=str(obj.id), name=obj.name, email=obj.email,
             learning_level=(obj.profile.learning_level if obj.profile else "beginner"),

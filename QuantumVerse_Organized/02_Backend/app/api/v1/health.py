@@ -32,5 +32,4 @@ async def metrics():
         f"quantumverse_info{{version=\"{settings.APP_VERSION}\"}} 1",
     ]
     from fastapi.responses import PlainTextResponse
-    return PlainTextResponse("
-".join(lines), media_type="text/plain; version=0.0.4")
+    return PlainTextResponse("\n".join(lines), media_type="text/plain; version=0.0.4")

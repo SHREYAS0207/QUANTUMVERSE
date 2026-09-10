@@ -55,8 +55,7 @@ async def export_circuit(body: ExportRequest, user: User = Depends(get_current_u
             "counts = result.get_counts()",
             "print(counts)",
         ]
-        return PlainTextResponse("
-".join(lines), media_type="text/plain")
+        return PlainTextResponse("\n".join(lines), media_type="text/plain")
 
     elif body.format == "json":
         import json

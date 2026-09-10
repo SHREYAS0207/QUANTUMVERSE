@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 from typing import Any
 import uuid
 
 from app.core.dependencies import get_current_user
 from app.database.session import get_db
-from app.models.user import User
+from app.models.user import User, UserStatistics
 from app.models.circuit import Circuit
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -33,6 +34,11 @@ async def list_circuits(db: AsyncSession = Depends(get_db), user: User = Depends
 
 @router.post("", status_code=201)
 async def create_circuit(body: CircuitBody, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    result = await db.execute(
+        select(User).options(selectinload(User.statistics)).where(User.id == user.id)
+    )
+    user = result.scalar_one()
+
     c = Circuit(
         user_id=user.id, name=body.name, description=body.description,
         qubits=body.qubits, classical_bits=body.classical_bits,
@@ -43,7 +49,13 @@ async def create_circuit(body: CircuitBody, db: AsyncSession = Depends(get_db), 
     await db.refresh(c)
 
     # Update stats
-    user.profile.total_circuits = (user.profile.total_circuits or 0) + 1
+    if user.statistics is None:
+        user.statistics = UserStatistics(user_id=user.id, total_circuits_created=1)
+        db.add(user.statistics)
+    else:
+        user.statistics.total_circuits_created = (
+            user.statistics.total_circuits_created or 0
+        ) + 1
     await db.commit()
 
     return _circuit_dict(c)
