@@ -6,7 +6,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { QuantumCard } from "@/components/shared/QuantumCard";
 import { algorithmService } from "@/services/algorithmService";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import toast from "react-hot-toast";
 
 type AlgId = "grover" | "teleportation" | "deutsch-jozsa" | "qft";
@@ -73,11 +72,14 @@ export default function AlgorithmsPage() {
   };
 
   const chartData = result?.probabilities
-    ? Object.entries(result.probabilities as Record<string, number>)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 8)
-        .map(([state, prob]) => ({ state: `|${state}⟩`, probability: Math.round(prob * 100) }))
-    : [];
+  ? Object.entries(result.probabilities as Record<string, number>)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 8)
+      .map(([state, probability]) => ({
+        state: `|${state}⟩`,
+        probability: Number((probability * 100).toFixed(2)),
+      }))
+  : [];
 
   return (
     <AppShell>
@@ -240,19 +242,40 @@ export default function AlgorithmsPage() {
                   <QuantumCard>
                     <div className="flex items-center gap-2 mb-4">
                       <BarChart2 className="w-4 h-4 text-muted-foreground" />
-                      <p className="text-sm font-medium text-white">Measurement Distribution</p>
+                      <p className="text-sm font-medium text-white">
+                        Measurement Distribution
+                      </p>
                     </div>
-                    <div className="h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                          <XAxis dataKey="state" tick={{ fill: "#94a3b8", fontSize: 10, fontFamily: "monospace" }} axisLine={false} tickLine={false} />
-                          <YAxis hide />
-                          <Tooltip contentStyle={{ background: "#0D1F3C", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "8px", color: "#e2e8f0", fontSize: "11px" }} />
-                          <Bar dataKey="probability" radius={[4, 4, 0, 0]}>
-                            {chartData.map((_, i) => <Cell key={i} fill={i === 0 ? alg.color : COLORS[i % COLORS.length]} fillOpacity={0.85} />)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+
+                    <div className="space-y-3">
+                      {chartData.map((item, index) => (
+                        <div
+                          key={item.state}
+                          className="grid grid-cols-[70px_1fr_55px] items-center gap-3"
+                        >
+                          <span className="text-xs font-mono text-muted-foreground">
+                            {item.state}
+                          </span>
+
+                          <div className="h-5 rounded bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full rounded transition-all duration-500"
+                              style={{
+                                width: `${Math.max(item.probability, 1)}%`,
+                                backgroundColor:
+                                  index === 0 ? alg.color : `${alg.color}99`,
+                              }}
+                            />
+                          </div>
+
+                          <span
+                            className="text-xs font-mono text-right"
+                            style={{ color: alg.color }}
+                          >
+                            {item.probability}%
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </QuantumCard>
                 )}
