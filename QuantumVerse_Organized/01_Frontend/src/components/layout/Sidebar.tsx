@@ -9,13 +9,24 @@ import {
 } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard, BookOpen, FlaskConical, Zap, Bot, Trophy, Star, TrendingUp, User, Settings,
+  LayoutDashboard,
+  BookOpen,
+  FlaskConical,
+  Zap,
+  Bot,
+  Trophy,
+  Star,
+  TrendingUp,
+  User,
+  Settings,
+  Atom,
 };
 
 const NAV_ITEMS = [
   { href: "/dashboard",    label: "Dashboard",    icon: "LayoutDashboard" },
   { href: "/learn",        label: "Learn",         icon: "BookOpen" },
   { href: "/quantum-lab",  label: "Quantum Lab",   icon: "FlaskConical" },
+  { href: "/quantum-models", label: "Quantum Models", icon: "Atom" },
   { href: "/algorithms",   label: "Algorithms",    icon: "Zap" },
   { href: "/ai-tutor",     label: "AI Tutor",      icon: "Bot" },
   { href: "/quiz",         label: "Quiz Arena",    icon: "Trophy" },

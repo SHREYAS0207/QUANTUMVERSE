@@ -1,3 +1,4 @@
+from app.api.v1.quantum_models import router as quantum_models_router
 from fastapi import APIRouter
 from .auth import router as auth_router
 from .circuits import router as circuits_router
@@ -16,3 +17,4 @@ api_router.include_router(algorithms_router)
 api_router.include_router(learning_router)
 api_router.include_router(ai_router)
 api_router.include_router(quiz_router)
+api_router.include_router(quantum_models_router)
