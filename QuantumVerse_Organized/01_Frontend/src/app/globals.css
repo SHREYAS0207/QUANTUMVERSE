@@ -4,100 +4,363 @@
 
 @layer base {
   :root {
-    --background: 222 84% 5%;
-    --foreground: 210 40% 96%;
-    --card: 221 65% 8%;
-    --card-foreground: 210 40% 96%;
-    --primary: 195 100% 50%;
-    --primary-foreground: 222 84% 5%;
-    --secondary: 270 60% 45%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 162 100% 51%;
-    --accent-foreground: 222 84% 5%;
-    --border: 217 33% 17%;
-    --input: 217 33% 15%;
-    --ring: 195 100% 50%;
+    /* ─────────────────────────────────────────────
+       QuantumVerse Design Tokens
+       ───────────────────────────────────────────── */
+
+    /* Backgrounds */
+    --background: 240 20% 2%;
+    --foreground: 210 20% 96%;
+    --surface: 240 18% 5%;
+    --surface-raised: 240 16% 8%;
+    --surface-hover: 240 15% 11%;
+
+    /* Cards */
+    --card: 240 18% 6%;
+    --card-foreground: 210 20% 96%;
+
+    /* Brand */
+    --primary: 188 100% 50%;
+    --primary-foreground: 240 20% 2%;
+
+    --secondary: 270 80% 62%;
+    --secondary-foreground: 210 20% 96%;
+
+    /* Supporting colors */
+    --accent: 165 100% 50%;
+    --accent-foreground: 240 20% 2%;
+
+    --warning: 48 100% 60%;
+    --danger: 0 85% 62%;
+    --success: 155 80% 48%;
+
+    /* Text */
+    --muted: 240 12% 14%;
+    --muted-foreground: 215 12% 60%;
+
+    /* UI */
+    --border: 240 12% 16%;
+    --input: 240 14% 10%;
+    --ring: 188 100% 50%;
+
     --radius: 0.75rem;
   }
 }
 
 @layer base {
-  * { @apply border-border; }
+  * {
+    @apply border-border;
+  }
 
   html {
-    background: #000;
+    background: #020205;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
+
+    min-height: 100vh;
+    overflow-x: hidden;
+
     background:
-      radial-gradient(ellipse at top, rgba(0,255,240,0.10), transparent 38%),
-      radial-gradient(ellipse at right bottom, rgba(191,0,255,0.12), transparent 35%),
-      #000;
-    font-family: "Times New Roman", Times, serif;
-    color: #f5f5f5;
+      radial-gradient(
+        ellipse 70% 50% at 50% -15%,
+        rgba(0, 212, 255, 0.08),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 45% 40% at 100% 100%,
+        rgba(168, 85, 247, 0.07),
+        transparent 65%
+      ),
+      #020205;
+
+    font-family:
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+
+    color: #f5f7fa;
     position: relative;
   }
 
+  /*
+   * Global atmospheric layer.
+   * Kept extremely subtle so it doesn't interfere
+   * with interactive UI or Three.js scenes.
+   */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 90% 80%, rgba(123,47,190,0.08) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
+
+    background:
+      radial-gradient(
+        ellipse 80% 55% at 50% -20%,
+        rgba(0, 212, 255, 0.055),
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 55% 45% at 90% 80%,
+        rgba(139, 92, 246, 0.045),
+        transparent 65%
+      );
   }
 
+  /*
+   * Very subtle technical texture.
+   */
   body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(255,255,255,0.02) 3px,
-      rgba(255,255,255,0.02) 4px
-    );
     pointer-events: none;
+    z-index: 0;
+
+    background-image:
+      linear-gradient(
+        rgba(255, 255, 255, 0.012) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.012) 1px,
+        transparent 1px
+      );
+
+    background-size: 48px 48px;
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.8),
+      transparent 85%
+    );
+  }
+
+  /*
+   * Keep application content above the atmospheric layers.
+   */
+  #__next {
+    position: relative;
     z-index: 1;
+  }
+
+  ::selection {
+    background: rgba(0, 212, 255, 0.25);
+    color: #ffffff;
   }
 }
 
-/* Quantum scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0A1628; }
-::-webkit-scrollbar-thumb { background: #00D4FF44; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #00D4FF88; }
+/* ─────────────────────────────────────────────
+   Scrollbar
+   ───────────────────────────────────────────── */
 
-/* Glassmorphism utility */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050508;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.22);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.45);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.25) #050508;
+}
+
+/* ─────────────────────────────────────────────
+   QuantumVerse Surface System
+   ───────────────────────────────────────────── */
+
 .glass {
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border: 1px solid rgba(0, 255, 240, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  background: rgba(8, 8, 14, 0.72);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.glass-hover {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .glass-hover:hover {
-  border-color: rgba(0, 255, 240, 0.30);
-  box-shadow: 0 0 28px rgba(0, 255, 240, 0.12);
-  transition: all 0.3s ease;
+  background: rgba(10, 10, 17, 0.82);
+
+  border-color: rgba(0, 212, 255, 0.22);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 0 32px rgba(0, 212, 255, 0.08);
+
+  transform: translateY(-1px);
 }
 
-/* Quantum glow effects */
-.glow-blue { box-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
-.glow-purple { box-shadow: 0 0 20px rgba(123, 47, 190, 0.4); }
-.glow-cyan { box-shadow: 0 0 20px rgba(6, 255, 165, 0.4); }
-.text-glow { text-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
+/* ─────────────────────────────────────────────
+   Brand Glow System
+   ───────────────────────────────────────────── */
 
-/* Circuit line animation */
+.glow-blue {
+  box-shadow:
+    0 0 20px rgba(0, 212, 255, 0.28),
+    0 0 60px rgba(0, 212, 255, 0.08);
+}
+
+.glow-purple {
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.28),
+    0 0 60px rgba(168, 85, 247, 0.08);
+}
+
+.glow-cyan {
+  box-shadow:
+    0 0 20px rgba(0, 255, 200, 0.28),
+    0 0 60px rgba(0, 255, 200, 0.08);
+}
+
+.text-glow {
+  text-shadow:
+    0 0 18px rgba(0, 212, 255, 0.35),
+    0 0 42px rgba(0, 212, 255, 0.12);
+}
+
+/* ─────────────────────────────────────────────
+   Typography Utilities
+   ───────────────────────────────────────────── */
+
+.qv-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #67e8f9 45%,
+    #22d3ee 100%
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.qv-muted {
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.qv-label {
+  color: rgba(255, 255, 255, 0.42);
+
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────────────
+   Interactive States
+   ───────────────────────────────────────────── */
+
+.qv-focus {
+  outline: none;
+}
+
+.qv-focus:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(2, 2, 5, 1),
+    0 0 0 4px rgba(0, 212, 255, 0.55);
+}
+
+/* ─────────────────────────────────────────────
+   Circuit Animation
+   ───────────────────────────────────────────── */
+
 @keyframes circuit-flow {
-  0% { stroke-dashoffset: 1000; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 1000;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
-.circuit-line { animation: circuit-flow 3s linear infinite; }
+
+.circuit-line {
+  animation: circuit-flow 3s linear infinite;
+}
+
+/* ─────────────────────────────────────────────
+   Subtle Entrance Animation
+   ───────────────────────────────────────────── */
+
+@keyframes qv-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qv-fade-up {
+  animation: qv-fade-up 420ms ease-out both;
+}
+
+/* ─────────────────────────────────────────────
+   Reduced Motion
+   ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Mobile
+   ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body {
+    background:
+      radial-gradient(
+        ellipse 90% 45% at 50% -10%,
+        rgba(0, 212, 255, 0.07),
+        transparent 65%
+      ),
+      #020205;
+  }
+}

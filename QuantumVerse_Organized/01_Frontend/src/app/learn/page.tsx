@@ -16,8 +16,14 @@ import {
   Sparkles,
   CheckCircle2,
   Circle,
+  FlaskConical,
 } from "lucide-react";
+
 import { AppShell } from "@/components/layout/AppShell";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { QuantumCard } from "@/components/shared/QuantumCard";
+import { QuantumBadge } from "@/components/shared/QuantumBadge";
+import { XPProgress } from "@/components/shared/XPProgress";
 import api from "@/lib/api";
 import type { LearningModule, ProgressData } from "@/types/learning";
 
@@ -70,6 +76,7 @@ export default function LearnPage() {
     completed: [],
     in_progress: [],
   });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -82,7 +89,10 @@ export default function LearnPage() {
       api
         .get("/learning/progress")
         .then((r) => r.data as ProgressData)
-        .catch(() => ({ completed: [], in_progress: [] })),
+        .catch(() => ({
+          completed: [],
+          in_progress: [],
+        })),
     ])
       .then(([mods, prog]) => {
         setModules(mods);
@@ -93,7 +103,11 @@ export default function LearnPage() {
   }, []);
 
   const totalLessons = useMemo(
-    () => modules.reduce((sum, module) => sum + (module.lesson_count || 0), 0),
+    () =>
+      modules.reduce(
+        (sum, module) => sum + (module.lesson_count || 0),
+        0
+      ),
     [modules]
   );
 
@@ -111,6 +125,7 @@ export default function LearnPage() {
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-cyan-400/20 border-t-cyan-400" />
+
             <p className="text-xs text-white/35">
               Loading quantum curriculum...
             </p>
@@ -122,67 +137,99 @@ export default function LearnPage() {
 
   return (
     <AppShell>
-      {/* Hero */}
-      <section className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] p-8 backdrop-blur-xl">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-purple-500/10 blur-3xl" />
+      {/* Page header */}
+      <PageHeader
+        eyebrow="QLEARN // CURRICULUM"
+        title="Master Quantum Computing"
+        subtitle="Follow a structured path from quantum fundamentals to multi-qubit systems and advanced algorithms."
+        icon={<Sparkles className="h-5 w-5" />}
+        action={
+          <div className="hidden items-center gap-2 sm:flex">
+            <QuantumBadge variant="default" dot>
+              {totalLessons} Lessons
+            </QuantumBadge>
 
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-cyan-300/70">
-              <Sparkles className="h-4 w-4" />
-              Quantum Academy
+            <QuantumBadge variant="success" dot>
+              {completedCount} Complete
+            </QuantumBadge>
+          </div>
+        }
+      />
+
+      {/* Hero learning panel */}
+      <section className="relative mb-8 overflow-hidden rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.025] p-5 backdrop-blur-xl sm:p-6">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/[0.07] blur-3xl"
+        />
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-violet-500/[0.05] blur-3xl"
+        />
+
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_320px] lg:items-center">
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <QuantumBadge variant="purple" dot>
+                Quantum Academy
+              </QuantumBadge>
             </div>
 
-            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-              Master Quantum Computing
-            </h1>
+            <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Build knowledge.
+              <span className="qv-gradient-text"> Then build circuits.</span>
+            </h2>
 
-            <p className="mt-3 text-sm leading-6 text-white/45">
-              Follow a structured path from quantum fundamentals to
-              multi-qubit systems and advanced algorithms. Learn the theory,
-              then experiment with it in the Quantum Lab.
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/40">
+              Learn the theory, understand the mathematics, and immediately
+              experiment with each concept inside the Quantum Lab.
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/learn/level/1">
-                <button className="flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-black transition hover:bg-cyan-300">
-                  Start Foundations
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/learn/level/1"
+                className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_0_24px_rgba(0,212,255,0.15)] transition-all hover:bg-cyan-300 hover:shadow-[0_0_32px_rgba(0,212,255,0.22)]"
+              >
+                Start Foundations
+                <ArrowRight className="h-4 w-4" />
               </Link>
 
-              <Link href="/quantum-lab">
-                <button className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10">
-                  Open Quantum Lab
-                </button>
+              <Link
+                href="/quantum-lab"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-medium text-white/70 transition-all hover:border-cyan-400/15 hover:bg-white/[0.06] hover:text-white"
+              >
+                <FlaskConical className="h-4 w-4" />
+                Open Quantum Lab
               </Link>
             </div>
           </div>
 
-          {/* Progress summary */}
-          <div className="min-w-[280px] rounded-2xl border border-cyan-400/15 bg-black/30 p-5">
-            <div className="flex items-center justify-between">
+          {/* Progress */}
+          <QuantumCard className="p-5">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                  Overall Progress
+                <p className="qv-label text-cyan-400/60">
+                  OVERALL PROGRESS
                 </p>
-                <p className="mt-1 text-3xl font-bold text-white">
+
+                <p className="mt-2 text-3xl font-semibold tabular-nums text-white">
                   {overallPercent}%
                 </p>
               </div>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-400/10">
-                <Trophy className="h-6 w-6 text-cyan-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/15 bg-cyan-400/[0.07]">
+                <Trophy className="h-5 w-5 text-cyan-300" />
               </div>
             </div>
 
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${overallPercent}%` }}
-                transition={{ duration: 1 }}
-                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+            <div className="mt-5">
+              <XPProgress
+                current={completedCount}
+                target={Math.max(totalLessons, 1)}
+                label="CURRICULUM COMPLETION"
+                showValues={false}
+                size="md"
               />
             </div>
 
@@ -195,30 +242,40 @@ export default function LearnPage() {
                 {inProgressCount} in progress
               </span>
             </div>
-          </div>
+          </QuantumCard>
         </div>
       </section>
 
+      {/* Error */}
       {error && (
-        <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300">
-          Learning data could not be loaded. Make sure the backend is running
-          and the learning database is seeded.
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-400/15 bg-red-400/[0.05] p-4">
+          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-400" />
+
+          <p className="text-sm leading-6 text-red-300">
+            Learning data could not be loaded. Make sure the backend is
+            running and the learning database is seeded.
+          </p>
         </div>
       )}
 
-      {/* Roadmap heading */}
-      <div className="mb-5 flex items-end justify-between">
+      {/* Roadmap header */}
+      <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300/50">
-            Learning Roadmap
+          <p className="qv-label text-cyan-400/60">
+            LEARNING ROADMAP
           </p>
-          <h2 className="mt-1 text-xl font-bold text-white">
+
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
             Your Quantum Journey
           </h2>
+
+          <p className="mt-1 text-sm text-white/35">
+            Four stages from fundamentals to quantum algorithms.
+          </p>
         </div>
 
-        <div className="hidden items-center gap-2 text-xs text-white/30 sm:flex">
-          <BookOpen className="h-4 w-4" />
+        <div className="hidden items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 text-xs text-white/35 sm:flex">
+          <BookOpen className="h-3.5 w-3.5" />
           {totalLessons} total lessons
         </div>
       </div>
@@ -236,6 +293,7 @@ export default function LearnPage() {
           );
 
           const moduleTitle = levelModules[0]?.title || meta.name;
+
           const description =
             levelModules[0]?.description || meta.description;
 
@@ -251,49 +309,66 @@ export default function LearnPage() {
 
           const available = levelModules.length > 0;
 
+          const complete =
+            levelCompleted === lessonCount && lessonCount > 0;
+
           return (
             <motion.div
               key={meta.level}
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08 }}
+              transition={{
+                delay: index * 0.07,
+                duration: 0.3,
+              }}
             >
               <Link
                 href={`/learn/level/${meta.level}`}
                 className="group block"
               >
-                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.045]">
-                  {/* Gradient strip */}
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.16] hover:bg-white/[0.045] hover:shadow-[0_18px_55px_rgba(0,0,0,0.25)]">
+                  {/* Level accent */}
                   <div
-                    className={`h-1.5 bg-gradient-to-r ${meta.gradient}`}
+                    className={`h-1 bg-gradient-to-r ${meta.gradient}`}
                   />
 
-                  {/* Glow */}
+                  {/* Ambient glow */}
                   <div
                     className={`pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full ${meta.glow} blur-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
                   />
 
-                  <div className="relative p-6">
+                  <div className="relative p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 items-center gap-4">
                         <div
-                          className={`flex h-13 w-13 items-center justify-center rounded-xl bg-gradient-to-br ${meta.gradient}`}
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${meta.gradient} shadow-lg`}
                         >
-                          <Icon className="h-6 w-6 text-white" />
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
 
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                            Level {meta.level} · {meta.short}
-                          </p>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="qv-label">
+                              Level {meta.level}
+                            </p>
 
-                          <h3 className="mt-1 text-lg font-bold text-white transition-colors group-hover:text-cyan-300">
+                            {complete && (
+                              <QuantumBadge
+                                variant="success"
+                                dot
+                              >
+                                Complete
+                              </QuantumBadge>
+                            )}
+                          </div>
+
+                          <h3 className="mt-1 truncate text-lg font-semibold text-white transition-colors group-hover:text-cyan-300">
                             {moduleTitle}
                           </h3>
                         </div>
                       </div>
 
-                      <ChevronRight className="mt-1 h-5 w-5 text-white/20 transition-all group-hover:translate-x-1 group-hover:text-cyan-300" />
+                      <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-white/20 transition-all group-hover:translate-x-1 group-hover:text-cyan-300" />
                     </div>
 
                     <p className="mt-5 text-sm leading-6 text-white/40">
@@ -302,66 +377,58 @@ export default function LearnPage() {
 
                     {/* Progress */}
                     <div className="mt-5">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-wider text-white/30">
-                          Level progress
-                        </span>
-
-                        <span className="text-xs font-semibold text-cyan-300">
-                          {levelPercent}%
-                        </span>
-                      </div>
-
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${levelPercent}%` }}
-                          transition={{
-                            duration: 0.8,
-                            delay: index * 0.08,
-                          }}
-                          className={`h-full rounded-full bg-gradient-to-r ${meta.gradient}`}
-                        />
-                      </div>
+                      <XPProgress
+                        current={levelCompleted}
+                        target={Math.max(lessonCount, 1)}
+                        label="LEVEL PROGRESS"
+                        showValues={false}
+                        size="sm"
+                      />
                     </div>
 
                     {/* Metadata */}
                     <div className="mt-5 grid grid-cols-3 gap-2">
-                      <div className="rounded-xl border border-white/5 bg-white/[0.025] p-3 text-center">
-                        <BookOpen className="mx-auto mb-1 h-4 w-4 text-cyan-300" />
-                        <p className="text-[9px] uppercase tracking-wider text-white/25">
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 text-center transition-colors group-hover:border-white/[0.09]">
+                        <BookOpen className="mx-auto mb-1.5 h-4 w-4 text-cyan-300" />
+
+                        <p className="qv-label">
                           Lessons
                         </p>
+
                         <p className="mt-1 text-sm font-semibold text-white">
                           {lessonCount}
                         </p>
                       </div>
 
-                      <div className="rounded-xl border border-white/5 bg-white/[0.025] p-3 text-center">
-                        {levelCompleted === lessonCount && lessonCount > 0 ? (
-                          <CheckCircle2 className="mx-auto mb-1 h-4 w-4 text-emerald-300" />
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 text-center transition-colors group-hover:border-white/[0.09]">
+                        {complete ? (
+                          <CheckCircle2 className="mx-auto mb-1.5 h-4 w-4 text-emerald-300" />
                         ) : (
-                          <Circle className="mx-auto mb-1 h-4 w-4 text-white/30" />
+                          <Circle className="mx-auto mb-1.5 h-4 w-4 text-white/25" />
                         )}
 
-                        <p className="text-[9px] uppercase tracking-wider text-white/25">
+                        <p className="qv-label">
                           Status
                         </p>
 
                         <p className="mt-1 text-xs font-semibold text-white">
-                          {levelCompleted === lessonCount && lessonCount > 0
+                          {complete
                             ? "Complete"
                             : available
-                              ? "Available"
+                              ? levelPercent > 0
+                                ? "In Progress"
+                                : "Available"
                               : "Soon"}
                         </p>
                       </div>
 
-                      <div className="rounded-xl border border-white/5 bg-white/[0.025] p-3 text-center">
-                        <Clock className="mx-auto mb-1 h-4 w-4 text-yellow-300" />
-                        <p className="text-[9px] uppercase tracking-wider text-white/25">
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3 text-center transition-colors group-hover:border-white/[0.09]">
+                        <Clock className="mx-auto mb-1.5 h-4 w-4 text-amber-300" />
+
+                        <p className="qv-label">
                           Activities
                         </p>
+
                         <p className="mt-1 text-xs font-semibold text-white">
                           Quiz + Lab
                         </p>
@@ -369,14 +436,16 @@ export default function LearnPage() {
                     </div>
 
                     {/* CTA */}
-                    <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-white/[0.06] pt-4">
                       <span className="text-xs text-white/25">
                         {levelPercent > 0
                           ? "Continue your progress"
-                          : "Begin this level"}
+                          : available
+                            ? "Begin this level"
+                            : "Coming soon"}
                       </span>
 
-                      <span className="flex items-center gap-1 text-xs font-semibold text-cyan-300">
+                      <span className="flex items-center gap-1 text-xs font-semibold text-cyan-300 transition-transform group-hover:translate-x-0.5">
                         Explore
                         <ArrowRight className="h-3 w-3" />
                       </span>
@@ -389,21 +458,22 @@ export default function LearnPage() {
         })}
       </div>
 
-      {/* Bottom learning tip */}
-      <div className="mt-6 rounded-2xl border border-white/5 bg-white/[0.02] p-5">
+      {/* Learning tip */}
+      <div className="mt-6 rounded-2xl border border-violet-400/10 bg-violet-400/[0.025] p-5 backdrop-blur-xl">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-400/10">
-            <Atom className="h-4 w-4 text-purple-300" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-400/15 bg-violet-400/[0.07]">
+            <Atom className="h-4 w-4 text-violet-300" />
           </div>
 
           <div>
             <p className="text-xs font-semibold text-white">
               Learn by doing
             </p>
+
             <p className="mt-1 text-xs leading-5 text-white/30">
-              After learning a concept, try it in the Quantum Lab. Building
-              circuits and observing measurements is the fastest way to turn
-              quantum theory into intuition.
+              After learning a concept, try it in the Quantum Lab.
+              Building circuits and observing measurements is the fastest
+              way to turn quantum theory into intuition.
             </p>
           </div>
         </div>
