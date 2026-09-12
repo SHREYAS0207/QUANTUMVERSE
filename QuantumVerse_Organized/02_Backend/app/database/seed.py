@@ -4,10 +4,12 @@ Run: python -m app.database.seed
 """
 import asyncio
 from app.database.connection import engine, Base
+from sqlalchemy import select
 from app.database.session import AsyncSessionLocal
 from app.models.learning import LearningModule, Lesson
 from app.models.achievement import Achievement
 from app.models.quiz import Quiz, Question, Difficulty, QuestionType
+from app.database.seed_additional_quizzes import QUIZZES
 
 MODULES = [
     {"title": "Quantum Fundamentals", "level": 1, "description": "Start your quantum journey from the very basics.", "icon": "atom", "lessons": [
@@ -85,14 +87,50 @@ async def seed():
         # Seed achievements
         for ach_data in ACHIEVEMENTS:
             session.add(Achievement(**ach_data))
-        # Seed sample quiz
-        quiz_data = SAMPLE_QUIZ.copy()
-        questions_data = quiz_data.pop("questions")
-        quiz = Quiz(**quiz_data)
-        session.add(quiz)
-        await session.flush()
-        for qd in questions_data:
-            session.add(Question(quiz_id=quiz.id, **qd))
+        # Seed all quizzes
+        module_rows = await session.execute(select(LearningModule))
+        modules_by_level = {
+            module.level: module
+            for module in module_rows.scalars().all()
+        }
+
+        # Existing original quiz
+        all_quizzes = [
+            {
+                "title": SAMPLE_QUIZ["title"],
+                "level": 1,
+                "difficulty": "easy",
+                "xp_reward": 100,
+                "questions": SAMPLE_QUIZ["questions"],
+            },
+            *QUIZZES,
+        ]
+
+        for quiz_data in all_quizzes:
+            questions_data = quiz_data["questions"]
+
+            quiz = Quiz(
+                title=quiz_data["title"],
+                module_id=modules_by_level[quiz_data["level"]].id,
+                difficulty=quiz_data["difficulty"],
+                xp_reward=quiz_data["xp_reward"],
+            )
+            session.add(quiz)
+            await session.flush()
+
+            for qd in questions_data:
+                session.add(
+                    Question(
+                        quiz_id=quiz.id,
+                        question_text=qd["question_text"],
+                        question_type=qd.get("question_type", "mcq"),
+                        options=qd["options"],
+                        correct_answer=qd["correct_answer"],
+                        explanation=qd.get("explanation", ""),
+                        topic=qd.get("topic", ""),
+                    )
+                )
+
         await session.commit()
     print("Database seeded successfully!")
 
