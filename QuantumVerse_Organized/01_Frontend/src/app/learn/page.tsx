@@ -1,34 +1,100 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, CheckCircle2, Lock, ChevronRight, Clock, Zap } from "lucide-react";
+import {
+  Atom,
+  BookOpen,
+  ChevronRight,
+  Clock,
+  Cpu,
+  GitBranch,
+  Trophy,
+  Zap,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/shared/PageHeader";
 import api from "@/lib/api";
-import type { LearningModule } from "@/types/learning";
+import type { LearningModule, ProgressData } from "@/types/learning";
 
-const LEVEL_COLORS = ["from-blue-500 to-cyan-500", "from-purple-500 to-pink-500", "from-green-500 to-emerald-500", "from-orange-500 to-yellow-500"];
-const LEVEL_ICONS = ["atom", "cpu", "link", "zap"];
+const LEVEL_META = [
+  {
+    level: 1,
+    name: "Quantum Foundations",
+    short: "Fundamentals",
+    description:
+      "Build the mental model you need before touching quantum circuits.",
+    icon: Atom,
+    gradient: "from-blue-500 to-cyan-500",
+  },
+  {
+    level: 2,
+    name: "Quantum Gates",
+    short: "Gates & Circuits",
+    description:
+      "Learn the core gates that transform and control qubit states.",
+    icon: Cpu,
+    gradient: "from-purple-500 to-pink-500",
+  },
+  {
+    level: 3,
+    name: "Multi-Qubit Systems",
+    short: "Entanglement",
+    description:
+      "Work with multiple qubits, controlled operations, and Bell states.",
+    icon: GitBranch,
+    gradient: "from-green-500 to-emerald-500",
+  },
+  {
+    level: 4,
+    name: "Quantum Algorithms",
+    short: "Algorithms",
+    description:
+      "Explore the algorithms that demonstrate quantum computational advantage.",
+    icon: Zap,
+    gradient: "from-orange-500 to-yellow-500",
+  },
+];
 
 export default function LearnPage() {
   const [modules, setModules] = useState<LearningModule[]>([]);
-  const [progress, setProgress] = useState<{ completed: string[] }>({ completed: [] });
+  const [progress, setProgress] = useState<ProgressData>({
+    completed: [],
+    in_progress: [],
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      api.get("/learning/modules").then((r) => r.data.modules),
-      api.get("/learning/progress").then((r) => r.data).catch(() => ({ completed: [] })),
-    ]).then(([mods, prog]) => {
-      setModules(mods);
-      setProgress(prog);
-    }).finally(() => setLoading(false));
+      api
+        .get("/learning/modules")
+        .then((r) => r.data.modules as LearningModule[]),
+
+      api
+        .get("/learning/progress")
+        .then((r) => r.data as ProgressData)
+        .catch(() => ({ completed: [], in_progress: [] })),
+    ])
+      .then(([mods, prog]) => {
+        setModules(mods);
+        setProgress(prog);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  const getModuleProgress = (module: LearningModule) => {
-    if (!module.lesson_count) return 0;
-    return 0; // Will be computed per lesson in detail view
-  };
+  const totalLessons = useMemo(
+    () => modules.reduce((sum, m) => sum + (m.lesson_count || 0), 0),
+    [modules]
+  );
+
+  const completedCount = progress.completed.length;
+
+  const overallPercent = totalLessons
+    ? Math.round((completedCount / totalLessons) * 100)
+    : 0;
 
   if (loading) {
     return (
@@ -42,74 +108,177 @@ export default function LearnPage() {
 
   return (
     <AppShell>
-      <PageHeader title="Learning Path" subtitle="Master quantum computing step by step" />
+      <PageHeader
+        title="Learning Path"
+        subtitle="Master quantum computing step by step"
+      />
 
-      {/* Level progression */}
-      <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-        {["Fundamentals", "Quantum Gates", "Multi-Qubit", "Algorithms"].map((lvl, i) => (
-          <div key={lvl} className="flex items-center gap-2 flex-shrink-0">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium bg-gradient-to-r ${LEVEL_COLORS[i]} text-white`}>
-              <span>Level {i + 1}</span>
-              <span className="opacity-80">{lvl}</span>
-            </div>
-            {i < 3 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      <div className="glass rounded-2xl border border-white/5 p-5 mb-7">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+              Your journey
+            </p>
+
+            <h2 className="text-xl font-bold text-white">
+              Quantum Computing Roadmap
+            </h2>
+
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose a level to open its dedicated lectures, activities, and
+              progress.
+            </p>
           </div>
-        ))}
+
+          <div className="min-w-[220px]">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-muted-foreground">
+                Overall progress
+              </span>
+
+              <span className="font-mono text-quantum-cyan">
+                {completedCount}/{totalLessons || 0} lessons · {overallPercent}%
+              </span>
+            </div>
+
+            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-quantum-blue to-quantum-cyan transition-all"
+                style={{ width: `${overallPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Modules grid */}
-      {modules.length === 0 ? (
-        <div className="glass rounded-xl border border-white/5 p-12 text-center">
-          <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">No modules found. Make sure the backend is running and seeded.</p>
-          <p className="text-xs text-muted-foreground/60 mt-2">Run: <code className="font-mono bg-white/5 px-2 py-0.5 rounded">python -m app.database.seed</code></p>
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300">
+          Learning data could not be loaded. Make sure the backend is running
+          and the learning database is seeded.
         </div>
-      ) : (
-        <div className="space-y-6">
-          {[1, 2, 3, 4].map((level) => {
-            const levelModules = modules.filter((m) => m.level === level);
-            if (!levelModules.length) return null;
-            return (
-              <div key={level}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`h-px flex-1 bg-gradient-to-r ${LEVEL_COLORS[level - 1]} opacity-30`} />
-                  <span className={`text-xs font-semibold uppercase tracking-widest bg-gradient-to-r ${LEVEL_COLORS[level - 1]} bg-clip-text text-transparent`}>
-                    Level {level}
-                  </span>
-                  <div className={`h-px flex-1 bg-gradient-to-l ${LEVEL_COLORS[level - 1]} opacity-30`} />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {levelModules.map((mod, i) => (
-                    <motion.div
-                      key={mod.id}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="glass rounded-xl border border-white/5 hover:border-quantum-blue/20 transition-all hover:-translate-y-1 p-5 cursor-pointer group"
-                    >
-                      <div className={`h-1 rounded-full bg-gradient-to-r ${LEVEL_COLORS[level - 1]} mb-4`} />
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-white text-sm group-hover:text-quantum-blue transition-colors">{mod.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{mod.description}</p>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {LEVEL_META.map((meta, index) => {
+          const levelModules = modules.filter(
+            (m) => m.level === meta.level
+          );
+
+          const lessonCount = levelModules.reduce(
+            (sum, m) => sum + (m.lesson_count || 0),
+            0
+          );
+
+          const moduleTitle =
+            levelModules[0]?.title || meta.name;
+
+          const Icon = meta.icon;
+
+          return (
+            <motion.div
+              key={meta.level}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.08 }}
+            >
+              <Link
+                href={`/learn/level/${meta.level}`}
+                className="block group"
+              >
+                <div className="glass rounded-2xl border border-white/5 hover:border-white/15 transition-all hover:-translate-y-1 overflow-hidden">
+                  <div
+                    className={`h-1.5 bg-gradient-to-r ${meta.gradient}`}
+                  />
+
+                  <div className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-12 h-12 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}
+                        >
+                          <Icon className="w-6 h-6 text-white" />
                         </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-quantum-blue transition-colors flex-shrink-0 ml-2" />
+
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                            Level {meta.level} · {meta.short}
+                          </p>
+
+                          <h3 className="text-lg font-bold text-white group-hover:text-quantum-blue transition-colors mt-1">
+                            {moduleTitle}
+                          </h3>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-3 h-3" /> {mod.lesson_count} lessons
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-yellow-400" />
-                          {mod.lesson_count * 50} XP
-                        </span>
+
+                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-quantum-blue transition-colors mt-1" />
+                    </div>
+
+                    <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
+                      {levelModules[0]?.description || meta.description}
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-2 mt-5">
+                      <div className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+                        <BookOpen className="w-4 h-4 mx-auto mb-1 text-quantum-cyan" />
+
+                        <p className="text-xs text-muted-foreground">
+                          Lectures
+                        </p>
+
+                        <p className="text-sm font-semibold text-white mt-0.5">
+                          {lessonCount}
+                        </p>
                       </div>
-                    </motion.div>
-                  ))}
+
+                      <div className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+                        <Clock className="w-4 h-4 mx-auto mb-1 text-yellow-400" />
+
+                        <p className="text-xs text-muted-foreground">
+                          Level
+                        </p>
+
+                        <p className="text-sm font-semibold text-white mt-0.5">
+                          {levelModules.length ? "Ready" : "Soon"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-white/[0.03] border border-white/5 p-3 text-center">
+                        <Trophy className="w-4 h-4 mx-auto mb-1 text-purple-400" />
+
+                        <p className="text-xs text-muted-foreground">
+                          Activities
+                        </p>
+
+                        <p className="text-sm font-semibold text-white mt-0.5">
+                          Quiz + Lab
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-5 pt-4 border-t border-white/5">
+                      <span className="text-xs text-muted-foreground">
+                        Open dedicated level workspace
+                      </span>
+
+                      <span className="text-xs font-semibold text-quantum-blue">
+                        Continue →
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {modules.length === 0 && !error && (
+        <div className="glass rounded-xl border border-white/5 p-12 text-center mt-6">
+          <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+
+          <p className="text-muted-foreground">
+            No learning modules are available yet.
+          </p>
         </div>
       )}
     </AppShell>

@@ -30,6 +30,7 @@ class Lesson(Base):
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     xp_reward: Mapped[int] = mapped_column(Integer, default=50)
     estimated_minutes: Mapped[int] = mapped_column(Integer, default=10)
+    youtube_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     module: Mapped["LearningModule"] = relationship(back_populates="lessons")
     progress: Mapped[list["LessonProgress"]] = relationship(back_populates="lesson", cascade="all, delete-orphan")
 

@@ -13,6 +13,7 @@ export interface Lesson {
   order_index: number;
   xp_reward: number;
   estimated_minutes: number;
+  youtube_url?: string | null;
   content?: LessonContent;
 }
 
