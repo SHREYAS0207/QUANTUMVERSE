@@ -9,6 +9,36 @@ from app.database.session import AsyncSessionLocal
 from app.models.learning import LearningModule, Lesson
 from app.models.quiz import Quiz, Question, Difficulty, QuestionType
 from app.database.seed_additional_quizzes import QUIZZES
+LESSON_VIDEOS = {
+    "Introduction to Quantum Computing": "https://www.youtube.com/watch?v=s2tGe7FSChE",
+    "Classical vs Quantum Computing": "https://www.youtube.com/watch?v=NZD9APb7ZtY",
+    "Bits vs Qubits": "https://www.youtube.com/watch?v=s2tGe7FSChE",
+    "Superposition": "https://www.youtube.com/watch?v=WjjUfEpej-0",
+    "Quantum Measurement": "https://www.youtube.com/watch?v=3-c4xJa7Flk",
+    "Quantum States": "https://www.youtube.com/watch?v=3-c4xJa7Flk",
+    "The Bloch Sphere": "https://www.youtube.com/watch?v=WjjUfEpej-0",
+
+    "Pauli-X Gate (Quantum NOT)": "https://www.youtube.com/watch?v=aCOsqL-jIOo",
+    "Pauli-Y Gate": "https://www.youtube.com/watch?v=ZvUD_KPjzLo",
+    "Pauli-Z Gate": "https://www.youtube.com/watch?v=NEDgAI50Bm8",
+    "Hadamard Gate": "https://www.youtube.com/watch?v=WjjUfEpej-0",
+    "Phase (S) Gate": "https://www.youtube.com/watch?v=aCOsqL-jIOo",
+    "T Gate": "https://www.youtube.com/watch?v=nfC9-JZaoE0",
+    "Rotation Gates (RX, RY, RZ)": "https://www.youtube.com/watch?v=qrNxFzLsqro",
+
+    "Multiple Qubits": "https://www.youtube.com/watch?v=BiDJFkOFWvE",
+    "CNOT Gate": "https://www.youtube.com/watch?v=YNLr6uIPHYA",
+    "Controlled Gates": "https://www.youtube.com/watch?v=aCOsqL-jIOo",
+    "Quantum Entanglement": "https://www.youtube.com/watch?v=tKx-JZg0qYk",
+    "Bell States": "https://www.youtube.com/watch?v=9MOIBcYf9wk",
+
+    "Deutsch-Jozsa Algorithm": "https://www.youtube.com/watch?v=QcK0GK7DUh8",
+    "Grover's Search Algorithm": "https://www.youtube.com/watch?v=RDGUpC7bc7s",
+    "Quantum Fourier Transform": "https://www.youtube.com/watch?v=0tmdEEl_Z2k",
+    "Shor's Algorithm (Overview)": "https://www.youtube.com/watch?v=505AJguv7pM",
+    "Quantum Teleportation": "https://www.youtube.com/watch?v=jBeFu8PHjgY",
+    "Superdense Coding": "https://www.youtube.com/watch?v=XxHxL5dPNyU",
+}
 
 MODULES = [
     {"title": "Quantum Fundamentals", "level": 1, "description": "Start your quantum journey from the very basics.", "icon": "atom", "lessons": [
@@ -71,7 +101,13 @@ async def seed():
             session.add(module)
             await session.flush()
             for i, ld in enumerate(lessons_data):
-                lesson = Lesson(module_id=module.id, order_index=i, content=ld.pop("content", {}), **ld)
+                lesson = Lesson(
+ 		   module_id=module.id,
+   		   order_index=i,
+   		   content=ld.pop("content", {}),
+    		   youtube_url=LESSON_VIDEOS.get(ld["title"]),
+   		   **ld,
+      		)
                 session.add(lesson)
         # Seed all quizzes
         module_rows = await session.execute(select(LearningModule))
