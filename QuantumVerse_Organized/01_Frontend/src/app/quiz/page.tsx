@@ -137,8 +137,11 @@ export default function QuizPage() {
                 {q.options.map((opt: any) => {
                   let variant = "border-white/10 hover:border-white/20";
                   if (selectedOption) {
-                    if (opt.id === q.correct_answer) variant = "border-green-500/60 bg-green-500/10";
-                    else if (opt.id === selectedOption && !isCorrect) variant = "border-red-500/60 bg-red-500/10";
+                    if (opt.id === q.correct_answer) {
+                      variant = "border-green-500/60 bg-green-500/10";
+                    } else if (opt.id === selectedOption) {
+                      variant = "border-red-500/60 bg-red-500/10";
+                    }
                   } else if (selectedOption === opt.id) {
                     variant = "border-quantum-blue/60 bg-quantum-blue/10";
                   }
