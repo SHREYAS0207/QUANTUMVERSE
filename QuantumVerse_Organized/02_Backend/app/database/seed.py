@@ -1,5 +1,5 @@
 """
-Database seeder — populates learning modules, lessons, achievements, and quizzes.
+Database seeder — populates learning modules, lessons, and quizzes.
 Run: python -m app.database.seed
 """
 import asyncio
@@ -7,7 +7,6 @@ from app.database.connection import engine, Base
 from sqlalchemy import select
 from app.database.session import AsyncSessionLocal
 from app.models.learning import LearningModule, Lesson
-from app.models.achievement import Achievement
 from app.models.quiz import Quiz, Question, Difficulty, QuestionType
 from app.database.seed_additional_quizzes import QUIZZES
 
@@ -47,16 +46,6 @@ MODULES = [
     ]},
 ]
 
-ACHIEVEMENTS = [
-    {"name": "Quantum Beginner", "description": "Complete your first lesson", "icon": "star", "badge_color": "blue", "unlock_condition": {"type": "lessons_completed", "value": 1}, "xp_reward": 50},
-    {"name": "Gate Master", "description": "Complete all gate lessons", "icon": "cpu", "badge_color": "purple", "unlock_condition": {"type": "module_completed", "value": 2}, "xp_reward": 200},
-    {"name": "Circuit Builder", "description": "Create 5 quantum circuits", "icon": "circuit-board", "badge_color": "cyan", "unlock_condition": {"type": "circuits_created", "value": 5}, "xp_reward": 150},
-    {"name": "Entanglement Explorer", "description": "Run a Bell state simulation", "icon": "link", "badge_color": "pink", "unlock_condition": {"type": "simulations_run", "value": 1}, "xp_reward": 100},
-    {"name": "Algorithm Expert", "description": "Explore all quantum algorithms", "icon": "zap", "badge_color": "gold", "unlock_condition": {"type": "algorithms_explored", "value": 4}, "xp_reward": 500},
-    {"name": "Quantum Scientist", "description": "Reach 1000 XP", "icon": "flask", "badge_color": "green", "unlock_condition": {"type": "xp", "value": 1000}, "xp_reward": 250},
-    {"name": "Quiz Champion", "description": "Score 100% on any quiz", "icon": "trophy", "badge_color": "gold", "unlock_condition": {"type": "perfect_quiz", "value": 1}, "xp_reward": 200},
-    {"name": "Streak Master", "description": "7 day learning streak", "icon": "flame", "badge_color": "orange", "unlock_condition": {"type": "streak", "value": 7}, "xp_reward": 300},
-]
 
 SAMPLE_QUIZ = {
     "title": "Quantum Fundamentals Quiz",
@@ -84,9 +73,6 @@ async def seed():
             for i, ld in enumerate(lessons_data):
                 lesson = Lesson(module_id=module.id, order_index=i, content=ld.pop("content", {}), **ld)
                 session.add(lesson)
-        # Seed achievements
-        for ach_data in ACHIEVEMENTS:
-            session.add(Achievement(**ach_data))
         # Seed all quizzes
         module_rows = await session.execute(select(LearningModule))
         modules_by_level = {

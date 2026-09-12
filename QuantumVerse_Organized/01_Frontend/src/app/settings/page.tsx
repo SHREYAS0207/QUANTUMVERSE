@@ -28,7 +28,6 @@ const SECTIONS: Array<{
     icon: Bell,
     items: [
       { label: "Daily Reminder", description: "Get reminded to continue learning", type: "toggle", default: true },
-      { label: "Achievement Alerts", description: "Notify when you earn a badge", type: "toggle", default: true },
     ],
   },
   {

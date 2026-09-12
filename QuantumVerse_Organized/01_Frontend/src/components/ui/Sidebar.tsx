@@ -19,7 +19,6 @@ const NAV = [
 
 const SECONDARY = [
   { label: "Progress",      href: "/progress",     icon: LayoutDashboard },
-  { label: "Achievements",  href: "/achievements", icon: Trophy          },
   { label: "Leaderboard",   href: "/leaderboard",  icon: Medal           },
   { label: "Profile",       href: "/profile",      icon: User            },
   { label: "Settings",      href: "/settings",     icon: Settings        },

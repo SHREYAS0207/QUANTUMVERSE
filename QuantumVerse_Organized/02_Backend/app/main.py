@@ -8,7 +8,6 @@ from app.models.user import Base as UserBase
 from app.models.circuit import Base as CircuitBase
 from app.models.learning import Base as LearningBase
 from app.models.quiz import Base as QuizBase
-from app.models.achievement import Base as AchievementBase
 from app.models.ai import Base as AIBase
 from app.api.v1.router import api_router
 
@@ -17,7 +16,7 @@ from app.api.v1.router import api_router
 async def lifespan(app: FastAPI):
     # Create tables on startup
     async with engine.begin() as conn:
-        for base in [UserBase, CircuitBase, LearningBase, QuizBase, AchievementBase, AIBase]:
+        for base in [UserBase, CircuitBase, LearningBase, QuizBase, AIBase]:
             await conn.run_sync(base.metadata.create_all)
     yield
 

@@ -19,7 +19,6 @@ const NAV_ITEMS = [
   { href: "/algorithms",   label: "Algorithms",    icon: "Zap" },
   { href: "/ai-tutor",     label: "AI Tutor",      icon: "Bot" },
   { href: "/quiz",         label: "Quiz Arena",    icon: "Trophy" },
-  { href: "/achievements", label: "Achievements",  icon: "Star" },
   { href: "/progress",     label: "Progress",      icon: "TrendingUp" },
   { href: "/profile",      label: "Profile",       icon: "User" },
   { href: "/settings",     label: "Settings",      icon: "Settings" },

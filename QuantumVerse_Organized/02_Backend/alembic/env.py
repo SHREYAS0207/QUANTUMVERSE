@@ -12,11 +12,10 @@ from app.models.user        import Base as UserBase
 from app.models.circuit     import Base as CircuitBase
 from app.models.learning    import Base as LearningBase
 from app.models.quiz        import Base as QuizBase
-from app.models.achievement import Base as AchievementBase
 from app.models.ai          import Base as AIBase
 
 target_metadata = [UserBase.metadata, CircuitBase.metadata, LearningBase.metadata,
-                   QuizBase.metadata, AchievementBase.metadata, AIBase.metadata]
+                   QuizBase.metadata, AIBase.metadata]
 
 
 def run_migrations_offline():
