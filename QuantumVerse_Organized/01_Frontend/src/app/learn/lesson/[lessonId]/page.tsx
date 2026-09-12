@@ -172,6 +172,11 @@ function YouTubeVideo({ url }: { url?: string | null }) {
 
   if (!videoId) return null;
 
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "";
+
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?origin=${encodeURIComponent(origin)}`;
+
   return (
     <QuantumCard className="mt-6 overflow-hidden">
       <div className="mb-4">
@@ -189,9 +194,10 @@ function YouTubeVideo({ url }: { url?: string | null }) {
 
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10">
         <iframe
-          src={`https://www.youtube.com/embed/${videoId}`}
+          src={embedUrl}
           title="QuantumVerse lesson video"
           className="absolute inset-0 w-full h-full"
+          referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
         />

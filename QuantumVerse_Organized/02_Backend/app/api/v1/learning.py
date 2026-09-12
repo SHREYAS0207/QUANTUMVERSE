@@ -12,8 +12,7 @@ from sqlalchemy import select
 
 from app.core.dependencies import get_current_user
 from app.database.session import get_db
-from app.models.user import User
-from app.models.learning import LearningModule, Lesson, LessonProgress
+from app.models.user import User, UserStatistics
 
 router = APIRouter(prefix="/learning", tags=["learning"])
 
@@ -62,33 +61,97 @@ async def get_module(module_id: str, db: AsyncSession = Depends(get_db)):
         "level": module.level, "lessons": [{
             "id": str(l.id), "title": l.title, "order_index": l.order_index,
             "xp_reward": l.xp_reward, "estimated_minutes": l.estimated_minutes,
-            "youtube_url": lesson.youtube_url,
+            "youtube_url": l.youtube_url,
         } for l in lessons],
     }
 
 
 
+@router.get("/lessons/{lesson_id}")
+async def get_lesson(
+    lesson_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    row = await db.execute(
+        select(Lesson).where(Lesson.id == lesson_id)
+    )
+    lesson = row.scalar_one_or_none()
+
+    if not lesson:
+        raise HTTPException(404, "Lesson not found")
+
+    return {
+        "id": str(lesson.id),
+        "title": lesson.title,
+        "order_index": lesson.order_index,
+        "xp_reward": lesson.xp_reward,
+        "estimated_minutes": lesson.estimated_minutes,
+        "content": lesson.content,
+        "youtube_url": lesson.youtube_url,
+    }
+
+
 @router.post("/lessons/{lesson_id}/complete")
 async def complete_lesson(
-    lesson_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+    lesson_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    lesson = (await db.execute(select(Lesson).where(Lesson.id == lesson_id))).scalar_one_or_none()
+    lesson = (
+        await db.execute(
+            select(Lesson).where(Lesson.id == lesson_id)
+        )
+    ).scalar_one_or_none()
+
     if not lesson:
         raise HTTPException(404, "Lesson not found")
 
     existing = await db.execute(
-        select(LessonProgress).where(LessonProgress.user_id == user.id, LessonProgress.lesson_id == lesson_id)
+        select(LessonProgress).where(
+            LessonProgress.user_id == user.id,
+            LessonProgress.lesson_id == lesson_id,
+        )
     )
-    if not existing.scalar_one_or_none():
-        prog = LessonProgress(user_id=user.id, lesson_id=lesson_id, completed=True)
-        db.add(prog)
-        user.xp = (user.xp or 0) + lesson.xp_reward
-        user.level = max(1, user.xp // 500 + 1)
-        if user.profile:
-            user.profile.total_lessons = (user.profile.total_lessons or 0) + 1
-        await db.commit()
 
-    return {"xp_earned": lesson.xp_reward, "total_xp": user.xp}
+    if existing.scalar_one_or_none():
+        total_xp = user.profile.xp if user.profile else 0
+        return {
+            "xp_earned": 0,
+            "total_xp": total_xp,
+        }
+
+    prog = LessonProgress(
+        user_id=user.id,
+        lesson_id=lesson_id,
+        status=ProgressStatus.completed,
+    )
+    db.add(prog)
+
+    if user.profile:
+        user.profile.xp = (user.profile.xp or 0) + lesson.xp_reward
+        user.profile.level = max(1, user.profile.xp // 500 + 1)
+
+    statistics = (
+        await db.execute(
+            select(UserStatistics).where(
+                UserStatistics.user_id == user.id
+            )
+        )
+    ).scalar_one_or_none()
+
+    if statistics:
+        statistics.total_lessons_completed = (
+            statistics.total_lessons_completed or 0
+        ) + 1
+
+    await db.commit()
+
+    total_xp = user.profile.xp if user.profile else 0
+
+    return {
+        "xp_earned": lesson.xp_reward,
+        "total_xp": total_xp,
+    }
 
 
 @router.get("/progress")
