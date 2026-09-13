@@ -24,11 +24,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 const NAV_ITEMS = [
   { href: "/dashboard",    label: "Dashboard",    icon: "LayoutDashboard" },
+  { href: "/qlearn",       label: "Q-Learn",       icon: "BookOpen" },
   { href: "/learn",        label: "Learn",         icon: "BookOpen" },
   { href: "/quantum-lab",  label: "Quantum Lab",   icon: "FlaskConical" },
   { href: "/quantum-models", label: "Quantum Models", icon: "Atom" },
   { href: "/algorithms",   label: "Algorithms",    icon: "Zap" },
   { href: "/ai-tutor",     label: "AI Tutor",      icon: "Bot" },
+  { href: "/quantum-solver", label: "Problem Solver", icon: "Zap" },
+  { href: "/quantum-explorer", label: "Quantum Explorer", icon: "FlaskConical" },
   { href: "/quiz",         label: "Quiz Arena",    icon: "Trophy" },
   { href: "/progress",     label: "Progress",      icon: "TrendingUp" },
   { href: "/profile",      label: "Profile",       icon: "User" },

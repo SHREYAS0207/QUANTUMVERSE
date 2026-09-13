@@ -1,5 +1,6 @@
 """Qiskit Aer simulation engine."""
 import time
+import numpy as np
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
@@ -41,9 +42,7 @@ def run_simulation(qubits: int, classical_bits: int, operations: list[dict], sho
 
 def run_statevector(qubits: int, operations: list[dict]) -> dict:
     """Run a statevector simulation (no measurement) and return state amplitudes."""
-    from qiskit_aer import StatevectorSimulator
-
-    sv_sim = StatevectorSimulator()
+    sv_sim = AerSimulator(method="statevector")
 
     # Build circuit WITHOUT measurement for statevector
     from qiskit import QuantumRegister, ClassicalRegister
@@ -72,10 +71,12 @@ def run_statevector(qubits: int, operations: list[dict]) -> dict:
                 pass
 
     try:
+        qc.save_state()
         job = sv_sim.run(qc)
         sv = job.result().get_statevector(0)
-        amps = [(float(a.real), float(a.imag)) for a in sv]
-        probs = {format(i, f"0{qubits}b"): abs(a) ** 2 for i, a in enumerate(sv)}
+        statevector = np.asarray(sv)
+        amps = [(float(a.real), float(a.imag)) for a in statevector]
+        probs = {format(i, f"0{qubits}b"): abs(a) ** 2 for i, a in enumerate(statevector)}
         probs = {k: round(v, 6) for k, v in probs.items() if v > 1e-8}
         return {"success": True, "state_vector": amps, "probabilities": probs}
     except Exception as exc:

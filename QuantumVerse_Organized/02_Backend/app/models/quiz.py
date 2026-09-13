@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Float, Boolean, ForeignKey, Text, JSON, DateTime, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.connection import Base
@@ -50,7 +50,7 @@ class QuizAttempt(Base):
     accuracy: Mapped[float] = mapped_column(Float, default=0.0)
     time_taken_seconds: Mapped[int] = mapped_column(Integer, default=0)
     xp_earned: Mapped[int] = mapped_column(Integer, default=0)
-    completed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    completed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     quiz: Mapped["Quiz"] = relationship(back_populates="attempts")
     answers: Mapped[list["QuizAnswer"]] = relationship(back_populates="attempt", cascade="all, delete-orphan")
 

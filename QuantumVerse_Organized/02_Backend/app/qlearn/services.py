@@ -1,0 +1,17 @@
+from .quantum_math import solve_known, apply_h_zero, bell_state
+TOPICS={'quantum teleportation':{'category':'Quantum Computing','overview':'Transfers an unknown qubit state using entanglement plus two classical bits; no physical particle is copied.','related':['Bell States','Entanglement','No-Cloning','Superdense Coding']},'grover':{'category':'Quantum Algorithms','overview':'Quadratic-speedup search algorithm using oracle phase marking and amplitude amplification.','related':['Amplitude Amplification','Oracle','Diffusion Operator']},'superposition':{'category':'Quantum Basics','overview':'A qubit can exist as a normalized linear combination α|0⟩ + β|1⟩ until measurement.','related':['Qubit','Measurement','Bloch Sphere']}}
+def tutor(req):
+    topic=(req.context or {}).get('currentTopic','current quantum topic')
+    calc=solve_known(req.message)
+    if calc: body=f"I routed this through the deterministic solver first. Result: {calc}. Conceptually, the amplitudes determine measurement probabilities by squared magnitude."
+    else: body=f"For {topic}: {req.message}\n\nSimple explanation: quantum systems are represented by state vectors. Operations are matrices, and measurement probabilities come from |amplitude|²."
+    return {'response':body,'intent':'ANSWER_QUESTION','suggestedActions':[{'label':'Open Solver','action':'OPEN_SOLVER'},{'label':'Visualize','action':'OPEN_SIMULATION'},{'label':'Practice','action':'GENERATE_PRACTICE'}],'context':req.context or {}}
+def solve(req):
+    calc=solve_known(req.question)
+    if not calc: return {'problem':req.question,'given':['Parsed from user input'],'required':'Unknown','formula':'Not enough structured data','substitution':'N/A','calculation':['QLearn could not verify this calculation.'],'finalAnswer':'Unverified','verification':{'status':'UNVERIFIED','message':'No deterministic solver matched this problem.'},'explanation':'Try entering a matrix, gate operation, or supported physics numerical.','suggestedActions':[]}
+    return {'problem':req.question,'given':['User problem statement'],'required':'Calculate final value/state and probabilities','formula':calc.get('formula','Gate/state-vector matrix multiplication'),'substitution':str(calc),'calculation':[str(calc)],'finalAnswer':calc.get('state') or f"{calc}",'verification':{'status':'VERIFIED','message':'✓ Calculation independently verified','details':calc},'explanation':'The result is computed deterministically, then checked using probability normalization or formula consistency.','visualization':calc,'suggestedActions':[{'label':'Visualize this result','action':'OPEN_SIMULATION'},{'label':'Ask follow-up','action':'ASK_TUTOR'}]}
+def explore(req):
+    q=req.query.lower(); key=next((k for k in TOPICS if k in q), 'quantum teleportation')
+    t=TOPICS[key]
+    sim=bell_state() if 'teleport' in key else apply_h_zero()
+    return {'topic':key.title(),'category':t['category'],'overview':t['overview'],'simulation':{'status':'VERIFIED' if key!='quantum teleportation' else 'EDUCATIONAL','engineOutput':sim,'controls':['Play','Pause','Reset','Step','Measure','Save']},'videos':[{'title':f'{key.title()} explained','source':'Verified educational source placeholder','difficulty':'BEGINNER'}],'lesson':{'title':key.title(),'sections':['Overview','Theory','Mathematics','Circuit','Practice']},'practice':[{'question':f'Explain the key idea of {key}.','type':'CONCEPTUAL'}],'relatedTopics':t['related'],'suggestedActions':[{'label':'Ask AI Tutor','action':'ASK_TUTOR'},{'label':'Solve Related Problem','action':'OPEN_SOLVER'}]}

@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
@@ -10,6 +12,13 @@ from app.models.user import User
 from app.models.circuit import Circuit, CircuitLike
 
 router = APIRouter(prefix="/community", tags=["community"])
+
+
+def _parse_uuid(value: str, field_name: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(value)
+    except (ValueError, AttributeError) as exc:
+        raise HTTPException(400, f"Invalid {field_name}") from exc
 
 
 @router.get("/circuits")
@@ -26,11 +35,12 @@ async def list_public(db: AsyncSession = Depends(get_db), sort: str = "recent", 
 
 @router.post("/circuits/{circuit_id}/like")
 async def like_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    c = await _get_public_or_404(db, circuit_id)
-    existing = await db.execute(select(CircuitLike).where(CircuitLike.circuit_id == circuit_id, CircuitLike.user_id == user.id))
+    circuit_uuid = _parse_uuid(circuit_id, "circuit_id")
+    c = await _get_public_or_404(db, circuit_uuid)
+    existing = await db.execute(select(CircuitLike).where(CircuitLike.circuit_id == circuit_uuid, CircuitLike.user_id == user.id))
     if existing.scalar_one_or_none():
         raise HTTPException(409, "Already liked")
-    db.add(CircuitLike(circuit_id=circuit_id, user_id=user.id))
+    db.add(CircuitLike(circuit_id=circuit_uuid, user_id=user.id))
     c.like_count = (c.like_count or 0) + 1
     await db.commit()
     return {"likes": c.like_count}
@@ -38,11 +48,12 @@ async def like_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), user
 
 @router.delete("/circuits/{circuit_id}/like", status_code=204)
 async def unlike_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    existing = await db.execute(select(CircuitLike).where(CircuitLike.circuit_id == circuit_id, CircuitLike.user_id == user.id))
+    circuit_uuid = _parse_uuid(circuit_id, "circuit_id")
+    existing = await db.execute(select(CircuitLike).where(CircuitLike.circuit_id == circuit_uuid, CircuitLike.user_id == user.id))
     like = existing.scalar_one_or_none()
     if not like:
         raise HTTPException(404, "Not liked")
-    c = await _get_public_or_404(db, circuit_id)
+    c = await _get_public_or_404(db, circuit_uuid)
     await db.delete(like)
     c.like_count = max(0, (c.like_count or 1) - 1)
     await db.commit()
@@ -50,20 +61,21 @@ async def unlike_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), us
 
 @router.post("/circuits/{circuit_id}/publish")
 async def publish_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    c = await _get_owned_or_404(db, circuit_id, user.id)
+    circuit_uuid = _parse_uuid(circuit_id, "circuit_id")
+    c = await _get_owned_or_404(db, circuit_uuid, user.id)
     c.is_public = True
     await db.commit()
     return {"published": True, "id": str(c.id)}
 
 
-async def _get_public_or_404(db: AsyncSession, circuit_id: str) -> Circuit:
+async def _get_public_or_404(db: AsyncSession, circuit_id: uuid.UUID) -> Circuit:
     row = await db.execute(select(Circuit).where(Circuit.id == circuit_id, Circuit.is_public == True))
     c = row.scalar_one_or_none()
     if not c:
         raise HTTPException(404, "Circuit not found")
     return c
 
-async def _get_owned_or_404(db: AsyncSession, circuit_id: str, user_id) -> Circuit:
+async def _get_owned_or_404(db: AsyncSession, circuit_id: uuid.UUID, user_id) -> Circuit:
     row = await db.execute(select(Circuit).where(Circuit.id == circuit_id, Circuit.user_id == user_id))
     c = row.scalar_one_or_none()
     if not c:

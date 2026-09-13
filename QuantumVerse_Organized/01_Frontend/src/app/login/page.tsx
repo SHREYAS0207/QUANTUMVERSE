@@ -24,9 +24,9 @@ export default function LoginPage() {
       const user = await authService.getProfile();
       setAuth(user as any, tokens.access_token);
       toast.success("Welcome back!");
-      router.push("/dashboard");
-    } catch {
-      // toast handled by interceptor
+      router.push("/qlearn/ai-tutor");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to sign in")
     } finally {
       setLoading(false);
     }

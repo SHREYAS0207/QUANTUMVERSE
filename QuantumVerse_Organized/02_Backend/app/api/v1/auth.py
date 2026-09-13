@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from app.core.security import create_access_token, verify_password, hash_password
 from app.core.dependencies import get_current_user
 from app.database.session import get_db
-from app.models.user import User, Profile, UserStatistics, UserStatistics
+from app.models.user import User, Profile
 from app.schemas.auth import SignupRequest, LoginRequest, TokenResponse, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/signup", response_model=TokenResponse, status_code=201)
 async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).options(selectinload(User.profile), selectinload(User.statistics)).where(User.email == body.email))
+    existing = await db.execute(select(User).where(User.email == body.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -32,10 +32,6 @@ async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
         learning_level=body.learning_level,
     )
     db.add(profile)
-
-    statistics = UserStatistics(user_id=user.id)
-    db.add(statistics)
-
     await db.commit()
     await db.refresh(user)
     await db.refresh(profile)
@@ -50,12 +46,15 @@ async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).options(selectinload(User.profile), selectinload(User.statistics)).where(User.email == body.email))
-    user = result.scalar_one_or_none()
+    result = await db.execute(
+        select(User.id, User.name, User.email, User.hashed_password).where(User.email == body.email)
+    )
+    user = result.one_or_none()
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    profile = user.profile
+    profile_result = await db.execute(select(Profile).where(Profile.id == user.id))
+    profile = profile_result.scalar_one_or_none()
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(
         access_token=token, token_type="bearer",
@@ -77,7 +76,9 @@ async def update_profile(
 ):
     allowed = {"name", "learning_level"}
     for key, val in body.items():
-        if key in allowed:
+        if key == "learning_level" and key in allowed and current_user.profile:
+            current_user.profile.learning_level = val
+        elif key in allowed:
             setattr(current_user, key, val)
     await db.commit()
     await db.refresh(current_user)

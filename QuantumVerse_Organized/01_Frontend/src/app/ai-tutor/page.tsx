@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { aiService } from "@/services/aiService";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
+import { QLearnShell } from "@/components/qlearn/QLearnShell";
 
 interface Message {
   role: "user" | "assistant";
@@ -34,6 +35,8 @@ const DIFFICULTY_LABELS: Array<{
 ];
 
 export default function AITutorPage() {
+  return <QLearnShell feature="tutor" />;
+
   const { user } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

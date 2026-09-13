@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
-from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 from typing import Any
 import uuid
 
 from app.core.dependencies import get_current_user
 from app.database.session import get_db
-from app.models.user import User, UserStatistics
+from app.models.user import User
 from app.models.circuit import Circuit
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -34,11 +33,6 @@ async def list_circuits(db: AsyncSession = Depends(get_db), user: User = Depends
 
 @router.post("", status_code=201)
 async def create_circuit(body: CircuitBody, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    result = await db.execute(
-        select(User).options(selectinload(User.statistics)).where(User.id == user.id)
-    )
-    user = result.scalar_one()
-
     c = Circuit(
         user_id=user.id, name=body.name, description=body.description,
         qubits=body.qubits, classical_bits=body.classical_bits,
@@ -49,13 +43,8 @@ async def create_circuit(body: CircuitBody, db: AsyncSession = Depends(get_db), 
     await db.refresh(c)
 
     # Update stats
-    if user.statistics is None:
-        user.statistics = UserStatistics(user_id=user.id, total_circuits_created=1)
-        db.add(user.statistics)
-    else:
-        user.statistics.total_circuits_created = (
-            user.statistics.total_circuits_created or 0
-        ) + 1
+    if user.statistics:
+        user.statistics.total_circuits_created += 1
     await db.commit()
 
     return _circuit_dict(c)
@@ -94,7 +83,12 @@ async def delete_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), us
 
 
 async def _get_or_404(db: AsyncSession, circuit_id: str, user_id: uuid.UUID) -> Circuit:
-    row = await db.execute(select(Circuit).where(Circuit.id == circuit_id, Circuit.user_id == user_id))
+    try:
+        circuit_uuid = uuid.UUID(circuit_id)
+    except (ValueError, AttributeError) as exc:
+        raise HTTPException(400, "Invalid circuit_id") from exc
+
+    row = await db.execute(select(Circuit).where(Circuit.id == circuit_uuid, Circuit.user_id == user_id))
     c = row.scalar_one_or_none()
     if not c:
         raise HTTPException(404, "Circuit not found")

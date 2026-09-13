@@ -36,7 +36,9 @@ async def get_ai_response(
 
     system = SYSTEM_PROMPTS.get(difficulty, SYSTEM_PROMPTS["beginner"])
     if context:
-        system += f"\n\nCurrent context: {context}"
+        system += f"\n\nCurrent context: {context}"        
+
+
 
     messages = [{"role": "system", "content": system}]
     messages.extend(history[-8:])  # last 8 messages for context

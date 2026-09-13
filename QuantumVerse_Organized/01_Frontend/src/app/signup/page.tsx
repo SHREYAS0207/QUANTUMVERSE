@@ -28,9 +28,9 @@ export default function SignupPage() {
       const user = await authService.getProfile();
       setAuth(user as any, tokens.access_token);
       toast.success("Welcome to QuantumVerse AI! 🚀");
-      router.push("/dashboard");
-    } catch {
-      // handled by interceptor
+      router.push("/qlearn/ai-tutor");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to create account")
     } finally {
       setLoading(false);
     }

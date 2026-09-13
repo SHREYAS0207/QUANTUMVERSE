@@ -1,6 +1,8 @@
 """Integration tests for QuantumVerse API."""
+import uuid
+
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from app.main import app
 
 
@@ -11,7 +13,8 @@ def anyio_backend():
 
 @pytest.mark.anyio
 async def test_health():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
@@ -19,10 +22,12 @@ async def test_health():
 
 @pytest.mark.anyio
 async def test_signup_and_login():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    email = f"test_{uuid.uuid4().hex[:10]}@quantumverse.ai"
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         # Signup
         res = await client.post("/api/v1/auth/signup", json={
-            "name": "Test User", "email": "test@quantumverse.ai",
+            "name": "Test User", "email": email,
             "password": "testpass123", "learning_level": "beginner",
         })
         assert res.status_code == 201
@@ -30,11 +35,11 @@ async def test_signup_and_login():
 
         # Login should work with the created account
         login_res = await client.post("/api/v1/auth/login", json={
-            "email": "test@quantumverse.ai",
+            "email": email,
             "password": "testpass123",
         })
         assert login_res.status_code == 200
-        assert login_res.json()["email"] == "test@quantumverse.ai"
+        assert login_res.json()["email"] == email
 
         # Profile
         profile = await client.get("/api/v1/auth/profile", headers={"Authorization": f"Bearer {token}"})
@@ -44,7 +49,8 @@ async def test_signup_and_login():
 
 @pytest.mark.anyio
 async def test_algorithms_list():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.get("/api/v1/algorithms")
     assert res.status_code == 200
     assert len(res.json()["algorithms"]) == 4

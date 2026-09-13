@@ -3,7 +3,7 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
 
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
