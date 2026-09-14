@@ -1,6 +1,0 @@
-#!/workspaces/QUANTUMVERSE/QuantumVerse_Organized/02_Backend/qiskit_env/bin/python
-import sys
-from mako.cmd import cmdline
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(cmdline())

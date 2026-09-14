@@ -22,8 +22,9 @@ import { GatePalette } from "@/components/quantum-lab/GatePalette";
 import { CircuitCanvas } from "@/components/quantum-lab/CircuitCanvas";
 import { SimulationPanel } from "@/components/quantum-lab/SimulationPanel";
 import { StepExecutor } from "@/components/quantum-lab/StepExecutor";
+import { AICircuitGenerator } from "@/components/quantum-lab/AICircuitGenerator";
 import { useCircuit } from "@/hooks/useCircuit";
-import type { GateInfo } from "@/types/circuit";
+import type { GateInfo, GateType } from "@/types/circuit";
 import { cn } from "@/lib/utils";
 
 const TEMPLATES = [
@@ -116,15 +117,21 @@ export default function QuantumLabPage() {
     circuit.setClassicalBits(tpl.cb);
 
     tpl.ops.forEach((op) => {
-      circuit.addGate(
-        op.gate as any,
-        op.targets,
-        op.controls,
-        op.column
-      );
+      circuit.addGate(op.gate as GateType, op.targets, op.controls, op.column);
     });
 
     circuit.setCircuitName(tpl.name);
+  };
+
+  const handleGeneratedCircuit = (generated: {
+    name: string;
+    qubits: number;
+    classical_bits: number;
+    operations: typeof circuit.operations;
+  }) => {
+    circuit.clearCircuit();
+    circuit.loadCircuit(generated.operations, generated.qubits, generated.classical_bits);
+    circuit.setCircuitName(generated.name);
   };
 
   const maxStep = Math.max(
@@ -160,6 +167,9 @@ export default function QuantumLabPage() {
 
       {/* Toolbar */}
       <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.025] p-3 backdrop-blur-xl">
+        <div className="mb-3">
+          <AICircuitGenerator onGenerated={handleGeneratedCircuit} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Circuit name */}
           <div className="mr-1">

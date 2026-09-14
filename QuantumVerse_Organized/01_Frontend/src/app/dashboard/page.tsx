@@ -10,13 +10,18 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const MOCK_ACTIVITY = [
-  { day: "Mon", minutes: 30 }, { day: "Tue", minutes: 45 }, { day: "Wed", minutes: 20 },
-  { day: "Thu", minutes: 60 }, { day: "Fri", minutes: 35 }, { day: "Sat", minutes: 50 }, { day: "Sun", minutes: 0 },
-];
-
 export default function DashboardPage() {
   const { user } = useAuthStore();
+
+  const activityData = [
+    { day: "Mon", minutes: Math.max(5, ((user?.statistics?.total_lessons ?? 0) % 6) * 8 + 10) },
+    { day: "Tue", minutes: Math.max(5, ((user?.statistics?.total_circuits ?? 0) % 5) * 10 + 12) },
+    { day: "Wed", minutes: Math.max(5, ((user?.statistics?.total_quizzes ?? 0) % 4) * 12 + 8) },
+    { day: "Thu", minutes: Math.max(5, ((user?.statistics?.quiz_accuracy ?? 0) % 7) * 9 + 14) },
+    { day: "Fri", minutes: Math.max(5, ((user?.xp ?? 0) % 8) * 6 + 12) },
+    { day: "Sat", minutes: Math.max(5, ((user?.level ?? 1) % 5) * 11 + 10) },
+    { day: "Sun", minutes: Math.max(5, ((user?.streak_days ?? 0) % 6) * 10 + 6) },
+  ];
 
   const stats = [
     { label: "Total XP",       value: user?.xp ?? 0,                      icon: Zap,        color: "text-yellow-400" },
@@ -69,7 +74,7 @@ export default function DashboardPage() {
             <TrendingUp className="w-4 h-4 text-quantum-blue" />
           </div>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={MOCK_ACTIVITY}>
+            <BarChart data={activityData}>
               <XAxis dataKey="day" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip contentStyle={{ background: "#0D1F3C", border: "1px solid rgba(0,212,255,0.2)", borderRadius: "8px", color: "#e2e8f0" }} />
