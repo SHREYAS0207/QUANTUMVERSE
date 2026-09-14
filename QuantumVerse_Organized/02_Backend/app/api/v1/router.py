@@ -11,6 +11,9 @@ from .ai_circuit import router as ai_circuit_router
 from .export import router as export_router
 from .health import router as system_router
 from .qlearn import router as qlearn_router
+from .admin import router as admin_router
+from .challenges import router as challenges_router
+from .solver import router as solver_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -25,4 +28,7 @@ api_router.include_router(community_router)
 api_router.include_router(ai_circuit_router)
 api_router.include_router(export_router)
 api_router.include_router(system_router)
+api_router.include_router(admin_router)
+api_router.include_router(challenges_router)
+api_router.include_router(solver_router)
 api_router.include_router(qlearn_router, prefix="/qlearn", tags=["qlearn"])
