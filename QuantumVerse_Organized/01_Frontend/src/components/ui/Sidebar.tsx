@@ -10,10 +10,10 @@ import {
 
 const NAV = [
   { label: "Dashboard",   href: "/dashboard",   icon: Home         },
+  { label: "Q-Learn",     href: "/qlearn",       icon: BookOpen     },
   { label: "Quantum Lab", href: "/quantum-lab",  icon: FlaskConical },
-  { label: "Learn",       href: "/learn",        icon: BookOpen     },
   { label: "Algorithms",  href: "/algorithms",   icon: Cpu          },
-  { label: "AI Tutor",    href: "/qlearn/ai-tutor", icon: BrainCircuit },
+  { label: "AI & Tutor",    href: "/qlearn/ai-tutor", icon: BrainCircuit },
   { label: "Quiz",        href: "/quiz",         icon: HelpCircle   },
 ] as const;
 

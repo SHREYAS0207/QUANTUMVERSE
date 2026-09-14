@@ -83,7 +83,7 @@ export default function LevelPage() {
 
   useEffect(() => {
     if (!meta) {
-      router.replace("/learn");
+      router.replace("/qlearn");
       return;
     }
 
@@ -190,7 +190,7 @@ export default function LevelPage() {
     <AppShell>
       <div className="mb-5">
         <button
-          onClick={() => router.push("/learn")}
+          onClick={() => router.push("/qlearn")}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

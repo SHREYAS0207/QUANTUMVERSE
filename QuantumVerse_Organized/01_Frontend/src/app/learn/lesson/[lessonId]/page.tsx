@@ -285,7 +285,7 @@ export default function LessonPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between gap-3">
           <Link
-            href={`/learn/level/${level}`}
+            href={`/qlearn/level/${level}`}
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

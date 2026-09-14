@@ -88,7 +88,7 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-white mb-4">Quick Actions</h2>
           <div className="space-y-2">
             {[
-              { href: "/learn",        label: "Continue Learning",  icon: BookOpen,    color: "text-blue-400" },
+              { href: "/qlearn",       label: "Continue Q-Learn",   icon: BookOpen,    color: "text-blue-400" },
               { href: "/quantum-lab",  label: "Build a Circuit",    icon: FlaskConical, color: "text-purple-400" },
               { href: "/qlearn/ai-tutor", label: "Ask QubitAI",     icon: Zap,          color: "text-cyan-400" },
               { href: "/quiz",         label: "Take a Quiz",         icon: Trophy,       color: "text-green-400" },

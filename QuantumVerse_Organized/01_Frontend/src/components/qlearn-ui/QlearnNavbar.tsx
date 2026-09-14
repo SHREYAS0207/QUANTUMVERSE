@@ -21,8 +21,8 @@ const navItems = [
     icon: LayoutDashboard,
   },
   {
-    label: "Learn",
-    href: "/learn",
+    label: "Q-Learn",
+    href: "/qlearn",
     icon: BookOpen,
   },
   {
@@ -31,8 +31,8 @@ const navItems = [
     icon: FlaskConical,
   },
   {
-    label: "AI Tutor",
-    href: "/ai-tutor",
+    label: "AI & Tutor",
+    href: "/qlearn/ai-tutor",
     icon: Brain,
   },
   {

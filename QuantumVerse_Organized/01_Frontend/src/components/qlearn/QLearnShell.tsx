@@ -22,14 +22,14 @@ const Card = ({ children, className = "" }: { children: React.ReactNode; classNa
 
 const FEATURE_META = {
   tutor: {
-    title: "QLearn AI Tutor",
+    title: "AI Tutor",
     subtitle: "Guided explanations for quantum concepts, intuition, and step-by-step learning.",
     icon: Bot,
     accent: "text-quantum-blue",
     badge: "bg-quantum-blue/10 text-quantum-blue border border-quantum-blue/30",
   },
   solver: {
-    title: "Quantum Problem Solver",
+    title: "Problem Solver",
     subtitle: "Solve conceptual and numerical quantum questions with verification and reasoning.",
     icon: Calculator,
     accent: "text-quantum-purple",
@@ -44,15 +44,23 @@ const FEATURE_META = {
   },
 } as const;
 
-export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explorer" }) {
-  const meta = FEATURE_META[feature];
+const MODE_OPTIONS = [
+  { value: "tutor", label: "Tutor" },
+  { value: "solver", label: "Solver" },
+  { value: "explorer", label: "Explorer" },
+] as const;
+
+export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver" | "explorer" | "all" }) {
+  const initialFeature = feature === "all" ? "tutor" : feature;
+  const [activeFeature, setActiveFeature] = useState<(typeof MODE_OPTIONS)[number]["value"]>(initialFeature);
+  const meta = FEATURE_META[activeFeature];
   const Icon = meta.icon;
 
   const [topic, setTopic] = useState("Quantum Teleportation");
   const [question, setQuestion] = useState(
-    feature === "tutor"
+    activeFeature === "tutor"
       ? "Explain the difference between superposition and entanglement in a beginner-friendly way."
-      : feature === "solver"
+      : activeFeature === "solver"
         ? "Apply the Hadamard gate to |0> and explain the measurement probabilities."
         : "Explore how Bell states enable quantum teleportation and what makes them special."
   );
@@ -61,8 +69,8 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
   const [difficulty, setDifficulty] = useState<"beginner" | "intermediate" | "advanced">("beginner");
 
   const context = useMemo(
-    () => ({ currentTopic: topic, currentLesson: feature, difficulty }),
-    [topic, feature, difficulty]
+    () => ({ currentTopic: topic, currentLesson: activeFeature, difficulty }),
+    [topic, activeFeature, difficulty]
   );
 
   async function run() {
@@ -71,13 +79,13 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
     setLoading(true);
     try {
       const result =
-        feature === "tutor"
+        activeFeature === "tutor"
           ? await qlearnService.chat({
               message: question.trim(),
               mode: "step_by_step",
               context,
             })
-          : feature === "solver"
+          : activeFeature === "solver"
             ? await qlearnService.solve({ question: question.trim(), context })
             : await qlearnService.explore({ query: question.trim(), context });
 
@@ -91,18 +99,35 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
     <AppShell>
       <div className="space-y-6">
         <PageHeader
-          title={meta.title}
-          subtitle={meta.subtitle}
+          title={feature === "all" ? "AI & Tutor" : meta.title}
+          subtitle={feature === "all"
+            ? "Unified AI assistance for tutoring, problem solving, and guided exploration."
+            : meta.subtitle}
           icon={
             <div className="w-11 h-11 rounded-xl border border-quantum-blue/20 bg-quantum-blue/10 flex items-center justify-center">
               <Icon className={`w-5 h-5 ${meta.accent}`} />
             </div>
           }
         >
-          <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${meta.badge}`}>
-            <Sparkles className="w-3.5 h-3.5" />
-            QLearn Active
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {feature === "all" && MODE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setActiveFeature(option.value)}
+                className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all ${
+                  activeFeature === option.value
+                    ? "border-quantum-blue/40 bg-quantum-blue/10 text-quantum-blue"
+                    : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${meta.badge}`}>
+              <Sparkles className="w-3.5 h-3.5" />
+              {feature === "all" ? "AI & Tutor Active" : "QLearn Active"}
+            </span>
+          </div>
         </PageHeader>
 
         <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
@@ -151,13 +176,13 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
                 <Wand2 className="w-4 h-4 text-quantum-cyan" />
                 <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-muted-foreground">Prompt</h2>
               </div>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-quantum-blue">{feature}</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-quantum-blue">{activeFeature}</span>
             </div>
 
             <textarea
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder={feature === "explorer" ? "Describe a quantum concept to explore..." : "Ask a question about quantum theory or computation..."}
+              placeholder={activeFeature === "explorer" ? "Describe a quantum concept to explore..." : "Ask a question about quantum theory or computation..."}
               className="h-36 w-full rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white placeholder:text-muted-foreground/70 focus:border-quantum-blue/40 focus:outline-none"
             />
 
@@ -199,7 +224,7 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
                     </div>
 
                     <div className="space-y-3 text-sm leading-relaxed text-slate-200">
-                      {feature === "tutor" && (
+                      {activeFeature === "tutor" && (
                         <>
                           <p>{answer?.response ?? "No response generated yet."}</p>
                           {answer?.suggestedActions?.length ? (
@@ -218,7 +243,7 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
                         </>
                       )}
 
-                      {feature === "solver" && (
+                      {activeFeature === "solver" && (
                         <>
                           <p>{answer?.finalAnswer ?? answer?.explanation ?? "No computed result generated yet."}</p>
                           {answer?.verification && (
@@ -229,7 +254,7 @@ export function QLearnShell({ feature }: { feature: "tutor" | "solver" | "explor
                         </>
                       )}
 
-                      {feature === "explorer" && (
+                      {activeFeature === "explorer" && (
                         <>
                           <p>{answer?.summary ?? answer?.result ?? answer?.message ?? "No exploration result yet."}</p>
                           {answer?.suggestedActions?.length ? (

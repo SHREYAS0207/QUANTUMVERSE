@@ -105,7 +105,7 @@ export default function ModulePage() {
         <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-black/75 backdrop-blur-xl">
           <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
             <button
-              onClick={() => router.push("/learn")}
+              onClick={() => router.push("/qlearn")}
               className="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/40 transition-colors hover:bg-white/[0.04] hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
