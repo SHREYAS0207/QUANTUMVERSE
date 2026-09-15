@@ -15,10 +15,36 @@ class Circuit(Base):
     circuit_data: Mapped[dict] = mapped_column(JSON, default=dict)
     is_template: Mapped[bool] = mapped_column(Boolean, default=False)
     template_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    like_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user: Mapped["User"] = relationship(back_populates="circuits")
-    simulations: Mapped[list["SimulationHistory"]] = relationship(back_populates="circuit", cascade="all, delete-orphan")
+    simulations: Mapped[list["SimulationHistory"]] = relationship(
+        back_populates="circuit",
+        cascade="all, delete-orphan",
+    )
+    likes: Mapped[list["CircuitLike"]] = relationship(
+        back_populates="circuit",
+        cascade="all, delete-orphan",
+    )
+
+class CircuitLike(Base):
+    __tablename__ = "circuit_likes"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    circuit_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("circuits.id"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    circuit: Mapped["Circuit"] = relationship(back_populates="likes")
+    user: Mapped["User"] = relationship()
+
 
 class SimulationHistory(Base):
     __tablename__ = "simulation_history"
