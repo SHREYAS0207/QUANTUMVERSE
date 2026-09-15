@@ -159,7 +159,7 @@ export default function QuantumLabPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.025] p-3 backdrop-blur-xl">
+      <div className="relative z-[200] mb-4 rounded-2xl border border-white/10 bg-white/[0.025] p-3 backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-2">
           {/* Circuit name */}
           <div className="mr-1">
@@ -228,13 +228,13 @@ export default function QuantumLabPage() {
           </div>
 
           {/* Template selector */}
-          <div className="group relative">
+          <div className="group relative z-[100]">
             <button className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white/55 transition hover:border-white/20 hover:text-white">
               Templates
               <ChevronDown className="h-3 w-3" />
             </button>
 
-            <div className="invisible absolute left-0 top-full z-30 mt-2 w-48 rounded-xl border border-white/10 bg-black/95 p-1 opacity-0 shadow-2xl backdrop-blur-xl transition-all group-hover:visible group-hover:opacity-100">
+            <div className="invisible absolute left-0 top-full z-[110] mt-2 w-48 rounded-xl border border-white/10 bg-black/95 p-1 opacity-0 shadow-2xl backdrop-blur-xl transition-all group-hover:visible group-hover:opacity-100">
               {TEMPLATES.map((tpl) => (
                 <button
                   key={tpl.name}
