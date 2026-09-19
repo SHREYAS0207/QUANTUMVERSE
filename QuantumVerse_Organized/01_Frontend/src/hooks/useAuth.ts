@@ -16,7 +16,7 @@ export function useAuth() {
       const profile = await authService.getProfile();
       setAuth(profile as any, tokens.access_token);
       toast.success(`Welcome back, ${profile.name}!`);
-      router.push("/qlearn/ai-tutor");
+      router.push("/dashboard");
     },
     [router, setAuth]
   );
@@ -28,7 +28,7 @@ export function useAuth() {
       const profile = await authService.getProfile();
       setAuth(profile as any, tokens.access_token);
       toast.success("🚀 Welcome to QuantumVerse AI!");
-      router.push("/qlearn/ai-tutor");
+      router.push("/dashboard");
     },
     [router, setAuth]
   );

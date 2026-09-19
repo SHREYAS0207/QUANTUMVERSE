@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import { AtomBackground } from "@/components/AtomBackground";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -17,10 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <AtomBackground />
-        <div className="relative z-10 min-h-screen">
-          {children}
-        </div>
+        {children}
         <Toaster
           position="top-right"
           toastOptions={{

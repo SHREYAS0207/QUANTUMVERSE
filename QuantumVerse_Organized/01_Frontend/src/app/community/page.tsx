@@ -19,6 +19,7 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     api.get(`/community/circuits?sort=${sort.toLowerCase()}`)
       .then(r => {
         const data = r.data;
@@ -46,7 +47,7 @@ export default function CommunityPage() {
           title="Community Circuits" subtitle="Explore and remix circuits shared by the community" />
         <div className="flex gap-1 p-1 glass rounded-xl border border-white/5">
           {SORT_OPTS.map(o => (
-            <button key={o} onClick={() => { setLoading(true); setSort(o); }}
+            <button key={o} onClick={() => setSort(o)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 sort === o ? "bg-quantum-blue/10 text-quantum-blue border border-quantum-blue/20" : "text-muted-foreground hover:text-white"
               }`}>{o}</button>

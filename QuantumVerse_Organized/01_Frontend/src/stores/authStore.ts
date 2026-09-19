@@ -18,18 +18,12 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: (user, token) => {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("qv_token", token);
-          localStorage.setItem("qv_user", JSON.stringify(user));
-        }
+        localStorage.setItem("qv_token", token);
         set({ user, token, isAuthenticated: true });
       },
       clearAuth: () => {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("qv_token");
-          localStorage.removeItem("qv_user");
-          localStorage.removeItem("qv_mock_session");
-        }
+        localStorage.removeItem("qv_token");
+        localStorage.removeItem("qv_user");
         set({ user: null, token: null, isAuthenticated: false });
       },
       updateUser: (updates) =>

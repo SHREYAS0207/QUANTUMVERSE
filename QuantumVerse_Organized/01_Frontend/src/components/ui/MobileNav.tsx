@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard",  icon: Home,          label: "Home"  },
-  { href: "/qlearn",     icon: BookOpen,      label: "Q-Learn" },
   { href: "/quantum-lab", icon: FlaskConical, label: "Lab"   },
-  { href: "/qlearn/ai-tutor", icon: BrainCircuit, label: "AI & Tutor" },
+  { href: "/learn",      icon: BookOpen,      label: "Learn" },
+  { href: "/ai-tutor",   icon: BrainCircuit,  label: "AI"   },
   { href: "/profile",    icon: User,          label: "Me"   },
 ];
 

@@ -31,11 +31,9 @@ public/         — PWA manifest, service worker
 ## Quick Start
 ```bash
 npm install
-cp .env.local.example .env.local   # set BACKEND_INTERNAL_URL if the API is not on port 8000
+cp .env.local.example .env.local   # fill in your API URL & Supabase keys
 npm run dev                         # http://localhost:3000
 ```
-
-The frontend calls `/api/v1`, and Next.js rewrites those requests to the FastAPI backend at `BACKEND_INTERNAL_URL`. Start the backend separately from `02_Backend` with `qiskit_env/bin/uvicorn app.main:app --reload --port 8000`; it uses `DATABASE_URL` from the backend `.env` file (SQLite by default, or PostgreSQL when configured).
 
 ## Docker
 ```bash

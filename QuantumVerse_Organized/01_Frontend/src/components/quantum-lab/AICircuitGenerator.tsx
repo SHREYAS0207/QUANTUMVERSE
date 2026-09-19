@@ -3,17 +3,9 @@ import { useState } from "react";
 import { Wand2, Loader2 } from "lucide-react";
 import { GlowButton } from "@/components/shared/GlowButton";
 import { api } from "@/lib/api";
-import type { GateOperation } from "@/types/circuit";
-
-interface GeneratedCircuit {
-  name: string;
-  qubits: number;
-  classical_bits: number;
-  operations: GateOperation[];
-}
 
 interface AICircuitGeneratorProps {
-  onGenerated: (circuit: GeneratedCircuit) => void;
+  onGenerated: (circuit: any) => void;
 }
 
 const EXAMPLES = [
@@ -30,18 +22,14 @@ export function AICircuitGenerator({ onGenerated }: AICircuitGeneratorProps) {
 
   async function generate() {
     if (!prompt.trim()) return;
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
-      const res = await api.post<GeneratedCircuit>("/ai-circuit/generate", {
-        description: prompt,
-      });
+      const res = await api.post("/ai-circuit/generate", { description: prompt });
       const data = res.data;
       onGenerated(data);
       setPrompt("");
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Generation failed";
-      setError(message);
+    } catch (e: any) {
+      setError(e.message ?? "Generation failed");
     } finally {
       setLoading(false);
     }

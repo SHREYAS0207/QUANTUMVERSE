@@ -4,151 +4,225 @@
 
 @layer base {
   :root {
-    --background: 222 84% 5%;
-    --foreground: 210 40% 96%;
-    --card: 221 65% 8%;
-    --card-foreground: 210 40% 96%;
-    --primary: 195 100% 50%;
-    --primary-foreground: 222 84% 5%;
-    --secondary: 270 60% 45%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 162 100% 51%;
-    --accent-foreground: 222 84% 5%;
-    --border: 217 33% 17%;
-    --input: 217 33% 15%;
-    --ring: 195 100% 50%;
-    --radius: 0.75rem;
-  }
-}
+    --background: 222 28% 4%;
+    --foreground: 210 24% 96%;
+    --surface: 220 25% 7%;
+    --surface-raised: 220 22% 10%;
+    --surface-hover: 220 20% 13%;
+    --card: 220 24% 7%;
+    --card-foreground: 210 24% 96%;
 
-@layer base {
-  * {
-    @apply border-border;
-    font-family: "Times New Roman", Times, serif !important;
+    --primary: 183 100% 52%;
+    --primary-foreground: 222 28% 4%;
+    --secondary: 270 72% 66%;
+    --secondary-foreground: 210 24% 96%;
+    --accent: 164 100% 52%;
+    --accent-foreground: 222 28% 4%;
+    --warning: 44 100% 62%;
+    --danger: 0 85% 64%;
+    --success: 156 78% 50%;
+
+    --muted: 220 18% 14%;
+    --muted-foreground: 215 14% 62%;
+    --border: 215 18% 18%;
+    --input: 220 20% 11%;
+    --ring: 183 100% 52%;
+    --radius: 0.8rem;
   }
 
-  html, body, button, input, textarea, select, option {
-    font-family: "Times New Roman", Times, serif !important;
-  }
+  * { @apply border-border; }
 
   html {
-    background: #000;
+    background: #030507;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
-    background:
-      radial-gradient(ellipse at top, rgba(0,255,240,0.10), transparent 38%),
-      radial-gradient(ellipse at right bottom, rgba(191,0,255,0.12), transparent 35%),
-      #000;
-    font-family: "Times New Roman", Times, serif;
-    color: #f5f5f5;
+    min-height: 100vh;
+    overflow-x: hidden;
     position: relative;
+    color: #f4f7fa;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(900px 560px at 50% -15%, rgba(0, 226, 255, .105), transparent 68%),
+      radial-gradient(700px 600px at 100% 70%, rgba(143, 74, 255, .075), transparent 70%),
+      radial-gradient(600px 500px at 0% 95%, rgba(0, 255, 200, .045), transparent 72%),
+      #030507;
   }
 
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 90% 80%, rgba(123,47,190,0.08) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
+    opacity: .75;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.72) 52%, transparent 100%);
   }
 
   body::after {
     content: "";
     position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(255,255,255,0.02) 3px,
-      rgba(255,255,255,0.02) 4px
-    );
+    inset: -20%;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 25% 35%, rgba(0, 239, 255, .06), transparent 18%),
+      radial-gradient(circle at 75% 65%, rgba(174, 89, 255, .055), transparent 20%);
+    animation: qv-atmosphere 18s ease-in-out infinite alternate;
+  }
+
+  #__next { position: relative; z-index: 1; }
+
+  ::selection {
+    background: rgba(0, 235, 255, .24);
+    color: #fff;
   }
 }
 
-/* Quantum scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0A1628; }
-::-webkit-scrollbar-thumb { background: #00D4FF44; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #00D4FF88; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #030507; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0,239,255,.32), rgba(164,87,255,.28));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0,239,255,.58); }
+* { scrollbar-width: thin; scrollbar-color: rgba(0,239,255,.35) #030507; }
 
-/* Glassmorphism utility */
 .glass {
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border: 1px solid rgba(0, 255, 240, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  background: linear-gradient(145deg, rgba(15,20,27,.80), rgba(5,8,12,.66));
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(255,255,255,.085);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 18px 60px rgba(0,0,0,.25);
 }
 
+.glass-hover {
+  transition: border-color .25s ease, background-color .25s ease, box-shadow .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+}
 .glass-hover:hover {
-  border-color: rgba(0, 255, 240, 0.30);
-  box-shadow: 0 0 28px rgba(0, 255, 240, 0.12);
-  transition: all 0.3s ease;
+  background: linear-gradient(145deg, rgba(18,25,33,.86), rgba(6,10,15,.72));
+  border-color: rgba(0, 235, 255, .26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 20px 70px rgba(0,0,0,.32), 0 0 36px rgba(0,220,255,.07);
+  transform: translateY(-2px);
 }
 
-/* Quantum glow effects */
-.glow-blue { box-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
-.glow-purple { box-shadow: 0 0 20px rgba(123, 47, 190, 0.4); }
-.glow-cyan { box-shadow: 0 0 20px rgba(6, 255, 165, 0.4); }
-.text-glow { text-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
+.glow-blue { box-shadow: 0 0 24px rgba(0,212,255,.24), 0 0 80px rgba(0,212,255,.07); }
+.glow-purple { box-shadow: 0 0 24px rgba(168,85,247,.24), 0 0 80px rgba(168,85,247,.07); }
+.glow-cyan { box-shadow: 0 0 24px rgba(0,255,200,.24), 0 0 80px rgba(0,255,200,.07); }
+.text-glow { text-shadow: 0 0 18px rgba(0,212,255,.38), 0 0 44px rgba(0,212,255,.12); }
 
-/* Circuit line animation */
+.qv-gradient-text {
+  background: linear-gradient(100deg, #fff 0%, #a7f3ff 38%, #42e9ff 65%, #b98cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.qv-muted { color: rgba(255,255,255,.54); }
+.qv-label {
+  color: rgba(181,211,220,.58);
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.qv-focus { outline: none; }
+.qv-focus:focus-visible {
+  box-shadow: 0 0 0 2px #030507, 0 0 0 4px rgba(0,224,255,.7);
+}
+
+.qv-shell {
+  position: relative;
+  isolation: isolate;
+}
+.qv-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 55% 35% at 50% 0%, rgba(0,225,255,.07), transparent 72%),
+    linear-gradient(180deg, rgba(255,255,255,.012), transparent 20%);
+}
+
+.qv-hud-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,235,255,.38), rgba(180,100,255,.24), transparent);
+}
+
+.qv-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(145deg, rgba(14,20,27,.82), rgba(4,7,11,.72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 18px 60px rgba(0,0,0,.22);
+}
+.qv-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 0 38%, rgba(0,240,255,.035) 50%, transparent 62%);
+  transform: translateX(-110%);
+  transition: transform .8s ease;
+}
+.qv-panel:hover::after { transform: translateX(110%); }
+
+.qv-orbit {
+  border: 1px solid rgba(105,231,255,.16);
+  border-radius: 999px;
+  box-shadow: 0 0 26px rgba(0,212,255,.05), inset 0 0 22px rgba(0,212,255,.025);
+  animation: qv-orbit 16s linear infinite;
+}
+
+.qv-scanline {
+  background: linear-gradient(180deg, transparent, rgba(0,239,255,.09), transparent);
+  animation: qv-scan 5s ease-in-out infinite;
+}
+
+.qv-fade-up { animation: qv-fade-up .55s cubic-bezier(.2,.8,.2,1) both; }
+
+@keyframes qv-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes qv-atmosphere {
+  from { transform: translate3d(-1%, -1%, 0) scale(1); opacity: .62; }
+  to { transform: translate3d(1%, 1%, 0) scale(1.04); opacity: .9; }
+}
+@keyframes qv-orbit { to { transform: rotate(360deg); } }
+@keyframes qv-scan {
+  0%, 100% { transform: translateY(-110%); opacity: 0; }
+  15%, 70% { opacity: 1; }
+  85% { transform: translateY(110%); opacity: 0; }
+}
 @keyframes circuit-flow {
   0% { stroke-dashoffset: 1000; }
   100% { stroke-dashoffset: 0; }
 }
 .circuit-line { animation: circuit-flow 3s linear infinite; }
 
-.quantum-background__atom {
-  position: absolute;
-  top: 28%;
-  right: 18%;
-  width: 360px;
-  height: 220px;
-  transform: rotate(-12deg);
-  opacity: 0.9;
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
-
-.quantum-background__nucleus {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 28px;
-  height: 28px;
-  transform: translate(-50%, -50%);
-  border-radius: 999px;
-  background: #06ffa5;
-  box-shadow: 0 0 14px #06ffa5, 0 0 42px rgba(0, 212, 255, 0.8);
-}
-
-.quantum-background__orbit {
-  position: absolute;
-  inset: 0;
-  border: 2px solid rgba(0, 212, 255, 0.58);
-  border-radius: 50%;
-  box-shadow: 0 0 16px rgba(0, 212, 255, 0.32);
-  animation: quantum-orbit 8s linear infinite;
-}
-
-.quantum-background__orbit--one { transform: rotate(0deg) scaleY(0.28); }
-.quantum-background__orbit--two { transform: rotate(60deg) scaleY(0.28); animation-duration: 11s; }
-.quantum-background__orbit--three { transform: rotate(120deg) scaleY(0.28); animation-duration: 14s; }
-
-@keyframes quantum-orbit {
-  from { filter: hue-rotate(0deg); }
-  to { filter: hue-rotate(45deg); }
-}
-
-@media (max-width: 700px) {
-  .quantum-background__atom { top: 18%; right: -90px; transform: scale(0.7) rotate(-12deg); }
+@media (max-width: 768px) {
+  body::before { background-size: 40px 40px; opacity: .55; }
+  body { background:
+    radial-gradient(600px 380px at 50% -10%, rgba(0,226,255,.08), transparent 70%),
+    #030507;
+  }
 }

@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/login", "/signup", "/about", "/explorer", "/solver", "/tutor"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/about"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/explorer", request.url));
-  }
 
   // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/") && p !== "/")) {

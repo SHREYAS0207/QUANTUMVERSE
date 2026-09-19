@@ -4,10 +4,10 @@ pydantic==2.8.2
 pydantic-settings==2.4.0
 sqlalchemy[asyncio]==2.0.31
 asyncpg==0.29.0
-aiosqlite==0.20.0
 alembic==1.13.2
 python-jose[cryptography]==3.3.0
-passlib==1.7.4
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 httpx==0.27.0
 qiskit==1.2.0
 qiskit-aer==0.14.2

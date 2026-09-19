@@ -4,21 +4,10 @@ const nextConfig: NextConfig = {
   output: "standalone",           // Needed for Docker
   poweredByHeader: false,
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "avatars.githubusercontent.com" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
-    ],
+    domains: ["avatars.githubusercontent.com", "lh3.googleusercontent.com"],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "/api/v1",
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000"}/api/v1/:path*`,
-      },
-    ];
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
   },
   async headers() {
     return [

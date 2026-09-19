@@ -10,8 +10,6 @@ import toast from "react-hot-toast";
 
 type QuizState = "list" | "active" | "result";
 
-const getTimestamp = () => Date.now();
-
 export default function QuizPage() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [quiz, setQuiz] = useState<any | null>(null);
@@ -34,7 +32,7 @@ export default function QuizPage() {
       setCurrentQ(0);
       setAnswers({});
       setSelectedOption(null);
-      setStartTime(getTimestamp());
+      setStartTime(Date.now());
       setState("active");
     } catch { toast.error("Failed to load quiz"); }
   };

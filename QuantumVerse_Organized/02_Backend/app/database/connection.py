@@ -1,4 +1,3 @@
-from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
@@ -8,15 +7,13 @@ class Base(DeclarativeBase):
     pass
 
 
-engine_options = {
-    "echo": settings.DEBUG,
-    "pool_pre_ping": True,
-}
-
-if not make_url(settings.DATABASE_URL).drivername.startswith("sqlite"):
-    engine_options.update(pool_size=10, max_overflow=20)
-
-engine: AsyncEngine = create_async_engine(settings.DATABASE_URL, **engine_options)
+engine: AsyncEngine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=settings.DEBUG,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
+)
 
 
 async def init_db():

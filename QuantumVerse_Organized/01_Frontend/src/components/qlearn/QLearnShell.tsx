@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
@@ -11,10 +11,13 @@ import {
   Sparkles,
   Target,
   Wand2,
+  BookOpen,
+  Zap,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { qlearnService } from "@/services/qlearnService";
+import { aiTutorService } from "@/services/aiTutorService";
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`glass rounded-2xl p-5 border border-white/5 ${className}`}>{children}</div>
@@ -67,6 +70,13 @@ export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver
   const [answer, setAnswer] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [difficulty, setDifficulty] = useState<"beginner" | "intermediate" | "advanced">("beginner");
+  const [modelReady, setModelReady] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] = useState<any>(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+
+  useEffect(() => {
+    aiTutorService.initializeModel().then(() => setModelReady(true));
+  }, []);
 
   const context = useMemo(
     () => ({ currentTopic: topic, currentLesson: activeFeature, difficulty }),
@@ -75,23 +85,34 @@ export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver
 
   async function run() {
     if (!question.trim()) return;
-
     setLoading(true);
     try {
-      const result =
-        activeFeature === "tutor"
-          ? await qlearnService.chat({
-              message: question.trim(),
-              mode: "step_by_step",
-              context,
-            })
-          : activeFeature === "solver"
-            ? await qlearnService.solve({ question: question.trim(), context })
-            : await qlearnService.explore({ query: question.trim(), context });
-
+      let result: any;
+      try {
+        result =
+          activeFeature === "tutor"
+            ? await qlearnService.chat({ message: question.trim(), mode: "step_by_step", context })
+            : activeFeature === "solver"
+              ? await qlearnService.solve({ question: question.trim(), context })
+              : await qlearnService.explore({ query: question.trim(), context });
+      } catch {
+        // fallback to aiTutorService.askQuestion when qlearnService is unavailable
+        result = await aiTutorService.askQuestion(question.trim(), context);
+      }
       setAnswer(result);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGenerateQuiz() {
+    setQuizLoading(true);
+    try {
+      const difficultyMap = { beginner: "easy", intermediate: "medium", advanced: "hard" } as const;
+      const quiz = await aiTutorService.generateQuiz(topic, difficultyMap[difficulty], 5);
+      setGeneratedQuiz(quiz);
+    } finally {
+      setQuizLoading(false);
     }
   }
 
@@ -126,6 +147,14 @@ export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver
             <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${meta.badge}`}>
               <Sparkles className="w-3.5 h-3.5" />
               {feature === "all" ? "AI & Tutor Active" : "QLearn Active"}
+            </span>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border ${
+              modelReady
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border-white/10 bg-white/5 text-muted-foreground"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${modelReady ? "bg-emerald-400" : "bg-muted-foreground animate-pulse"}`} />
+              {modelReady ? "Model Ready" : "Initializing..."}
             </span>
           </div>
         </PageHeader>
@@ -188,14 +217,25 @@ export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver
 
             <div className="mt-5 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">Context-aware reasoning enabled</span>
-              <button
-                onClick={run}
-                disabled={loading || !question.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-quantum-blue px-4 py-2.5 text-sm font-semibold text-quantum-dark disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                {loading ? "Processing..." : "Run"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleGenerateQuiz}
+                  disabled={quizLoading || !modelReady}
+                  title="Generate a quiz on the current topic"
+                  className="inline-flex items-center gap-2 rounded-xl border border-quantum-purple/30 bg-quantum-purple/10 px-3 py-2.5 text-sm font-semibold text-quantum-purple disabled:cursor-not-allowed disabled:opacity-50 hover:bg-quantum-purple/20 transition-all"
+                >
+                  {quizLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                  {quizLoading ? "Generating..." : "Quiz"}
+                </button>
+                <button
+                  onClick={run}
+                  disabled={loading || !question.trim()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-quantum-blue px-4 py-2.5 text-sm font-semibold text-quantum-dark disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {loading ? "Processing..." : "Run"}
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 space-y-4">
@@ -268,6 +308,42 @@ export function QLearnShell({ feature = "tutor" }: { feature?: "tutor" | "solver
                           ) : null}
                         </>
                       )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Generated Quiz Panel */}
+              <AnimatePresence>
+                {generatedQuiz && (
+                  <motion.div
+                    key="quiz"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="rounded-2xl border border-quantum-purple/20 bg-[#0d0a1e] p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-quantum-purple">
+                        <Zap className="w-3.5 h-3.5" />
+                        Generated Quiz — {topic}
+                      </div>
+                      <button
+                        onClick={() => setGeneratedQuiz(null)}
+                        className="text-xs text-muted-foreground hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {(generatedQuiz?.questions ?? [generatedQuiz]).map((q: any, i: number) => (
+                        <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
+                          <p className="font-medium mb-2">Q{i + 1}. {q?.question_text ?? q?.question ?? JSON.stringify(q)}</p>
+                          {q?.options?.map((opt: any, j: number) => (
+                            <p key={j} className="text-xs text-muted-foreground pl-2">• {opt?.text ?? opt}</p>
+                          ))}
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
                 )}

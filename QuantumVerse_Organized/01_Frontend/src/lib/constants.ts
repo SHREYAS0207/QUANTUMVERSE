@@ -28,10 +28,10 @@ export const XP_PER_LEVEL = 500;
 
 export const SIDEBAR_ITEMS = [
   { href: "/dashboard",   label: "Dashboard",   icon: "LayoutDashboard" },
-  { href: "/qlearn",      label: "Q-Learn",      icon: "BookOpen" },
+  { href: "/learn",       label: "Learn",        icon: "BookOpen" },
   { href: "/quantum-lab", label: "Quantum Lab",  icon: "FlaskConical" },
   { href: "/algorithms",  label: "Algorithms",   icon: "Zap" },
-  { href: "/qlearn/ai-tutor", label: "AI & Tutor", icon: "Bot" },
+  { href: "/ai-tutor",    label: "AI Tutor",     icon: "Bot" },
   { href: "/quiz",        label: "Quiz Arena",   icon: "Trophy" },
   { href: "/progress",    label: "Progress",     icon: "TrendingUp" },
   { href: "/profile",     label: "Profile",      icon: "User" },

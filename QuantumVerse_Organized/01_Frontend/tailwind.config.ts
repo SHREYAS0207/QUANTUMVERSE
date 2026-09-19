@@ -69,9 +69,7 @@ const config: Config = {
         "glow-gradient": "radial-gradient(ellipse at center, rgba(0,212,255,0.1) 0%, transparent 70%)",
       },
       fontFamily: {
-        sans: ["Times New Roman", "Times", "serif"],
-        serif: ["Times New Roman", "Times", "serif"],
-        mono: ["Times New Roman", "Times", "serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
       backdropBlur: {
         xs: "2px",

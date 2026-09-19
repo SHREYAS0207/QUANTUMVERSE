@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -26,8 +26,6 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         localStorage.removeItem("qv_token");
         localStorage.removeItem("qv_user");
-        localStorage.removeItem("qv_auth");
-        document.cookie = "qv_token=; path=/; max-age=0";
         window.location.href = "/login";
       }
     }
