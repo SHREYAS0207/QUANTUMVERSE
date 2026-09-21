@@ -160,7 +160,7 @@ export default function QuantumLabPage() {
 
       {/* Toolbar */}
       <div className="relative z-[200] mb-4 rounded-2xl border border-white/10 bg-white/[0.025] p-3 backdrop-blur-xl">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2"> 
           {/* Circuit name */}
           <div className="mr-1">
             <input
