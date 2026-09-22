@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ?
-  undefined : "standalone" ,           // Needed for Docker
+  undefined : "standalone" ,/02_           // Needed for Docker
   poweredByHeader: false,
   images: {
     domains: ["avatars.githubusercontent.com", "lh3.googleusercontent.com"],
