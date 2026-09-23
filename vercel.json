@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd QuantumVerse_Organized/01_Frontend && npm install && npm run build",
+  "outputDirectory": "QuantumVerse_Organized/01_Frontend/.next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://your-backend.railway.app/api/:path*"
+    }
+  ]
+}
