@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/signup",
-      "destination": "https://onrender.com"
-    }
-    {
       "source": "/api/:path*",
       "destination": "https://onrender.com*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
