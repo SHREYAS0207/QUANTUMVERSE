@@ -48,7 +48,7 @@ export const authService = {
     password: string,
     learning_level: string
   ): Promise<AuthTokens> {
-    const { data } = await api.post<AuthResponse>("/auth/signup", {
+    const { data } = await api.post<AuthResponse>("/api/v1/auth/signup", {
       name,
       email,
       password,

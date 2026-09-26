@@ -55,7 +55,8 @@ def build_circuit(qubits: int, classical_bits: int, operations: list[dict]) -> Q
         elif gate in GATE_MAP and GATE_MAP[gate] is not None:
             try:
                 GATE_MAP[gate](qc, targets, controls, params)
-            except Exception:
+            except Exception as e:
+                log.warning("Gate application error for %s: %s", gate, e)
                 pass  # Skip malformed gates
 
     # Apply measurements at the end
