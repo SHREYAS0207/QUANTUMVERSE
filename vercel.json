@@ -1,7 +1,8 @@
 {
-  "buildCommand": "cd QuantumVerse_Organized/01_Frontend && npm install && npm run build",
-  "outputDirectory": "QuantumVerse_Organized/01_Frontend/.next",
+  "rootDirectory": "QuantumVerse_Organized/01_Frontend",
   "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
   "rewrites": [
     {
       "source": "/api/:path*",

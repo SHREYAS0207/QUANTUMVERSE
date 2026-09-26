@@ -14,8 +14,13 @@ QuantumVerse_Organized/02_Backend/quantumverse.db
 # Environment / secrets
 .env
 .env.local
+*.env.local
 .env.*.local
 .env.backup
+env.local
 
 # Local Docker/Compose workaround
 QuantumVerse_Organized/05_DevOps/backend
+
+# pycache in tests
+QuantumVerse_Organized/02_Backend/tests/__pycache__/
