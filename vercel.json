@@ -1,12 +1,8 @@
 {
-  "rootDirectory": "QuantumVerse_Organized/01_Frontend",
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-backend.railway.app/api/:path*"
+      "destination": "https://railway.app*"
     }
   ]
 }
