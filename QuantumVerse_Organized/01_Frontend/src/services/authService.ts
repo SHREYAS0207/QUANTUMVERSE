@@ -69,7 +69,7 @@ export const authService = {
   },
 
   async login(email: string, password: string): Promise<AuthTokens> {
-    const { data } = await api.post<AuthResponse>("/api/v1/auth/signin", {
+    const { data } = await api.post<AuthResponse>("/api/v1/auth/login", {
       email,
       password,
     });
