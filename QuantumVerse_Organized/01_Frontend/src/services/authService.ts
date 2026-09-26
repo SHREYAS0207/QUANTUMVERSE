@@ -87,7 +87,7 @@ export const authService = {
   },
 
   async getProfile(): Promise<User> {
-    const { data } = await api.get<User>("/auth/profile");
+    const { data } = await api.get<User>("api/auth/profile");
 
     if (typeof window !== "undefined") {
       localStorage.setItem("qv_user", JSON.stringify(data));
@@ -97,7 +97,7 @@ export const authService = {
   },
 
   async updateProfile(updates: Partial<User>): Promise<User> {
-    const { data } = await api.put<User>("/auth/profile", updates);
+    const { data } = await api.put<User>("api/auth/profile", updates);
 
     if (typeof window !== "undefined") {
       localStorage.setItem("qv_user", JSON.stringify(data));
