@@ -2,11 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://onrender.com*"
-    },
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "destination": "https://quantumverse-lklr.onrender.com/api/:path*"
     }
   ]
 }
