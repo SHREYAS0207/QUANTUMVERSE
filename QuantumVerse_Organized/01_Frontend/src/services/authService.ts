@@ -48,7 +48,7 @@ export const authService = {
     password: string,
     learning_level: string
   ): Promise<AuthTokens> {
-    const { data } = await api.post<AuthResponse>("/auth/signup", {
+    const { data } = await api.post<AuthResponse>("/api/v1/auth/signup", {
       name,
       email,
       password,
@@ -69,7 +69,7 @@ export const authService = {
   },
 
   async login(email: string, password: string): Promise<AuthTokens> {
-    const { data } = await api.post<AuthResponse>("/auth/login", {
+    const { data } = await api.post<AuthResponse>("/api/v1/auth/login", {
       email,
       password,
     });
@@ -87,7 +87,7 @@ export const authService = {
   },
 
   async getProfile(): Promise<User> {
-    const { data } = await api.get<User>("/auth/profile");
+    const { data } = await api.get<User>("api/auth/profile");
 
     if (typeof window !== "undefined") {
       localStorage.setItem("qv_user", JSON.stringify(data));
@@ -97,7 +97,7 @@ export const authService = {
   },
 
   async updateProfile(updates: Partial<User>): Promise<User> {
-    const { data } = await api.put<User>("/auth/profile", updates);
+    const { data } = await api.put<User>("api/auth/profile", updates);
 
     if (typeof window !== "undefined") {
       localStorage.setItem("qv_user", JSON.stringify(data));

@@ -17,6 +17,7 @@ import { QuantumCard } from "@/components/shared/QuantumCard";
 import { StatCard } from "@/components/shared/StatCard";
 import { XPProgress } from "@/components/shared/XPProgress";
 import { QuantumBadge } from "@/components/shared/QuantumBadge";
+import { QuantumVerseExperience } from "@/components/quantum-lab/QuantumVerseExperience";
 import { useAuthStore } from "@/stores/authStore";
 import {
   BarChart,
@@ -171,6 +172,11 @@ export default function DashboardPage() {
             <StatCard {...stat} />
           </motion.div>
         ))}
+      </div>
+
+      {/* SIH Showcase Experience */}
+      <div className="mb-8">
+        <QuantumVerseExperience />
       </div>
 
       {/* Main dashboard content */}

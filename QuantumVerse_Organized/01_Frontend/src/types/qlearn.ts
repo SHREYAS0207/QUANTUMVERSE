@@ -1,0 +1,13 @@
+export type Difficulty='beginner'|'intermediate'|'advanced';
+export type ExplanationMode='simple'|'mathematical'|'step_by_step'|'beginner'|'exam'|'analogy'|'derivation'|'example';
+export type SimulationStatus='VERIFIED'|'EDUCATIONAL'|'APPROXIMATION'|'UNVERIFIED';
+export type GateName='I'|'X'|'Y'|'Z'|'H'|'S'|'T'|'RX'|'RY'|'RZ'|'CNOT'|'CZ'|'SWAP'|'TOFFOLI';
+export interface Complex{re:number;im:number}
+export interface CircuitGate{id:string;gate:GateName;targets:number[];controls?:number[];theta?:number;step:number}
+export interface QLearnContext{currentTopic?:string;currentLesson?:string;currentSimulation?:any;currentCircuit?:{qubits:number;gates:CircuitGate[];state?:Complex[];probabilities?:Record<string,number>};currentProblem?:string;difficulty?:Difficulty}
+export interface TutorRequest{message:string;mode?:ExplanationMode;context?:QLearnContext;conversationId?:string}
+export interface TutorResponse{response:string;intent:string;suggestedActions:{label:string;action:string;payload?:any}[];context:QLearnContext}
+export interface SolverRequest{question:string;context?:QLearnContext;examMarks?:2|4|5|6|10}
+export interface SolverResponse{problem:string;given:string[];required:string;formula:string;substitution:string;calculation:string[];finalAnswer:string;verification:{status:'VERIFIED'|'FAILED'|'UNVERIFIED';message:string;details?:any};explanation:string;visualization?:any;suggestedActions:any[]}
+export interface ExplorerRequest{query:string;context?:QLearnContext}
+export interface ExplorerResponse{topic:string;category:string;overview:string;simulation:any;videos:any[];lesson:any;practice:any[];relatedTopics:string[];suggestedActions:any[]}

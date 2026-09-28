@@ -1,4 +1,5 @@
 """Circuit export / import endpoints."""
+import html
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ async def export_circuit(body: ExportRequest, user: User = Depends(get_current_u
             f"qc = QuantumCircuit({body.qubits}, {body.classical_bits})",
         ]
         for op in ops:
-            gate = op.get("gate", "").lower()
+            gate = html.escape(str(op.get("gate", ""))).lower()
             targets = op.get("targets", [])
             controls = op.get("controls", [])
             if gate in ("h", "x", "y", "z", "s", "t", "sdg", "tdg") and targets:

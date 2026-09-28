@@ -15,7 +15,7 @@ router = APIRouter(prefix="/community", tags=["community"])
 @router.get("/circuits")
 async def list_public(db: AsyncSession = Depends(get_db), sort: str = "recent", limit: int = 20):
     """List publicly shared circuits."""
-    query = select(Circuit).where(Circuit.is_public == True)
+    query = select(Circuit).where(Circuit.is_public.is_(True))
     if sort == "popular":
         query = query.order_by(desc(Circuit.like_count))
     else:
@@ -57,7 +57,7 @@ async def publish_circuit(circuit_id: str, db: AsyncSession = Depends(get_db), u
 
 
 async def _get_public_or_404(db: AsyncSession, circuit_id: str) -> Circuit:
-    row = await db.execute(select(Circuit).where(Circuit.id == circuit_id, Circuit.is_public == True))
+    row = await db.execute(select(Circuit).where(Circuit.id == circuit_id, Circuit.is_public.is_(True)))
     c = row.scalar_one_or_none()
     if not c:
         raise HTTPException(404, "Circuit not found")

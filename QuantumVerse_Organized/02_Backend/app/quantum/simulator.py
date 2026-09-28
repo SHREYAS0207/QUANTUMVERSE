@@ -1,5 +1,7 @@
 """Qiskit Aer simulation engine."""
+import logging
 import time
+log = logging.getLogger(__name__)
 from qiskit import QuantumCircuit
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
@@ -68,8 +70,8 @@ def run_statevector(qubits: int, operations: list[dict]) -> dict:
         if gate in GATE_MAP and GATE_MAP[gate] is not None:
             try:
                 GATE_MAP[gate](qc, targets, controls, params)
-            except Exception:
-                pass
+            except Exception as e:
+                log.warning("Gate error %s: %s", gate, e)
 
     try:
         job = sv_sim.run(qc)
