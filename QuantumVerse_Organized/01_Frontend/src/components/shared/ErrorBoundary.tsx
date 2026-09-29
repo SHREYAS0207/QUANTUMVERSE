@@ -12,7 +12,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, info);
+    const safeMsg = String(error?.message ?? "").replace(/[\r\n]/g, " ");
+    console.error("ErrorBoundary caught:", safeMsg, info.componentStack);
   }
 
   render() {

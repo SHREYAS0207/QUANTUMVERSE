@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://quantumverse-lklr.onrender.com/api/:path*"
+    }
+  ]
+}

@@ -8,13 +8,13 @@ class Settings(BaseSettings):
     APP_URL: str     = "https://quantumverse.ai"
     DEBUG: bool      = False
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/quantumverse"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./quantumverse.db"
 
-    SECRET_KEY: str  = "change-me-in-production-use-256-bit-random-key"
+    SECRET_KEY: str  = ""
     ALGORITHM: str   = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
 
-    OPENROUTER_API_KEY: str = "your-openrouter-key-here"
+    OPENROUTER_API_KEY: str = ""
     AI_MODEL: str           = "meta-llama/llama-3.1-8b-instruct:free"
 
     REDIS_URL: str = "redis://localhost:6379/0"

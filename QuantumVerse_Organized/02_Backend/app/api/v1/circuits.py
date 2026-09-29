@@ -25,7 +25,7 @@ class CircuitBody(BaseModel):
 @router.get("")
 async def list_circuits(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     rows = await db.execute(
-        select(Circuit).where(Circuit.user_id == user.id, Circuit.is_template == False)
+        select(Circuit).where(Circuit.user_id == user.id, Circuit.is_template.is_(False))
         .order_by(desc(Circuit.updated_at)).limit(50)
     )
     items = rows.scalars().all()
@@ -63,7 +63,7 @@ async def create_circuit(body: CircuitBody, db: AsyncSession = Depends(get_db), 
 
 @router.get("/templates")
 async def list_templates(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    rows = await db.execute(select(Circuit).where(Circuit.is_template == True))
+    rows = await db.execute(select(Circuit).where(Circuit.is_template.is_(True)))
     return {"templates": [_circuit_dict(c) for c in rows.scalars().all()]}
 
 
